@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/login_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:utmlostnfound/screens/authenticate/login_screen.dart';
 
-void main() {
-  runApp(MyApp());
+Future main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SplashScreen(), // Start with SplashScreen
     );
@@ -17,6 +23,8 @@ class MyApp extends StatelessWidget {
 
 // SplashScreen with delay before navigating to LoginScreen
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -26,10 +34,10 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     // Delay of 3 seconds before navigating to the next screen
-    Future.delayed(Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     });
   }
