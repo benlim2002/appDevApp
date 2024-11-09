@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:utmlostnfound/appbar.dart'; 
 
 class FoundItemScreen extends StatelessWidget {
   final List<Map<String, dynamic>> foundItems = [
@@ -25,24 +26,15 @@ class FoundItemScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Found Item"),
-        backgroundColor: Colors.brown[800],
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              // Handle menu action
-            },
-          ),
-        ],
+      appBar: const CustomAppBar(
+        title: "Found Item",
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
             colors: [
               Color(0xFFFFE6E6),
               Color(0xFFDFFFD6),

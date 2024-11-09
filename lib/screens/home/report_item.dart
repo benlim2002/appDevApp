@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:utmlostnfound/appbar.dart'; 
 
 class ReportLostItemScreen extends StatefulWidget {
   const ReportLostItemScreen({super.key});
@@ -35,16 +35,15 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Report Lost Item"),
-        backgroundColor: Colors.brown[800],
-        centerTitle: true,
+      appBar: const CustomAppBar(
+        title: "Report Lost Item",
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
             colors: [
               Color(0xFFFFE6E6),
               Color(0xFFDFFFD6),

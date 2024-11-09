@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/screens/authenticate/register_screen.dart';
-import 'package:utmlostnfound/screens/home/aft_login.dart';
+import 'package:utmlostnfound/screens/home/home.dart';
+import 'package:utmlostnfound/screens/admin/admin.dart';
+import 'package:utmlostnfound/screens/security/security.dart';
 import 'package:utmlostnfound/services/services.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -21,18 +24,77 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signIn() async {
     try {
+      // Sign in with Firebase Auth
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
-      );
-    } catch (e) {
+
+      // Get the current user's ID
+      final user = _auth.currentUser;
+      if (user != null) {
+        // Fetch user role from Firestore
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        // Check if the document exists and retrieve the role
+        if (userDoc.exists) {
+          String? role = userDoc.get('role');
+          
+          // Redirect based on the role
+          if (role == 'admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => AdminScreen()),
+            );
+          } else if (role == 'security') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SecurityScreen()),
+            );
+          } else {
+            // Default to student role or general user
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
+            );
+          }
+        } else {
+          setState(() {
+            _errorMessage = "User role not found in Firestore.";
+          });
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      // Handle FirebaseAuth-specific errors
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = _getFriendlyErrorMessage(e.code);
       });
+    } catch (e) {
+      // Handle any other errors
+      setState(() {
+        _errorMessage = "An unexpected error occurred. Please try again.";
+      });
+    }
+  }
+
+  // Helper function to map Firebase exceptions to user-friendly messages
+  String _getFriendlyErrorMessage(String _errorMessage) {
+    switch (_errorMessage) {
+      case 'user-not-found':
+        return "No account found with this email.";
+      case 'wrong-password':
+        return "Incorrect password. Please try again.";
+      case 'invalid-email':
+        return "The email address is not valid.";
+      case 'user-disabled':
+        return "This user has been disabled. Contact support.";
+      case 'too-many-requests':
+        return "Too many attempts. Please try again later.";
+      default:
+        return "An unexpected error occurred. Please try again.";
     }
   }
 
@@ -58,8 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
             colors: [
               Color(0xFFFFE6E6), // Light pink color
               Color(0xFFDFFFD6), // Light green color
@@ -164,9 +226,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (_errorMessage != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: Colors.red),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.redAccent),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error, color: Colors.redAccent),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: const TextStyle(color: Colors.redAccent),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 

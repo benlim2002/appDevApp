@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:utmlostnfound/screens/home/aft_login.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:utmlostnfound/screens/home/home.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,9 +12,13 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   bool _isPasswordObscure = true;
   bool _isConfirmPasswordObscure = true;
   String? _selectedFaculty;
@@ -22,6 +27,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
 
     // Email and password validation
     if (!email.endsWith("@graduate.utm.my")) {
@@ -34,7 +41,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
-      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      // Register user with Firebase Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      String userId = userCredential.user!.uid;
+
+      // Store user data in Firestore with role "student"
+      await _firestore.collection('users').doc(userId).set({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'faculty': _selectedFaculty,
+        'role': 'student', // Set role to student
+      });
+
+      // Navigate to the home screen
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
@@ -66,8 +86,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
             colors: [
               Color(0xFFFFE6E6), // Light pink color
               Color(0xFFDFFFD6), // Light green color
@@ -79,26 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo and Title Row
-              /*  Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/lost_found_logo.png', // Update with your asset's path
-                      width: 40,
-                      height: 40,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'UTM LOST & FOUND',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown[800],
-                      ),
-                    ),
-                  ],
-                ),*/
                 const SizedBox(height: 40),
                 
                 // Registration Box
@@ -134,6 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Name Field
                       const Text('Name'),
                       TextField(
+                        controller: _nameController,
                         decoration: InputDecoration(
                           hintText: 'Enter your name',
                           filled: true,
@@ -145,9 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 15),
 
-
-
-                       // Email Field
+                      // Email Field
                       const Text('Email'),
                       TextField(
                         controller: _emailController,
@@ -162,11 +161,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 15),
 
-
                       // Faculty Dropdown
                       const Text('Faculty'),
                       Container(
-                        constraints: const BoxConstraints(maxWidth: 400), // Adjust maxWidth as needed
+                        constraints: const BoxConstraints(maxWidth: 400),
                         child: DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: _selectedFaculty,
@@ -180,7 +178,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'Faculty of Built Environment and Surveying ', 
                             'Faculty of Management',
                             'Faculty of Social Sciences and Humanities'
-                            
                           ].map((faculty) => DropdownMenuItem(
                             value: faculty,
                             child: Text(faculty),
@@ -204,6 +201,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Phone Number Field
                       const Text('Phone Number'),
                       TextField(
+                        controller: _phoneController,
                         decoration: InputDecoration(
                           hintText: 'Enter your phone number',
                           filled: true,
@@ -214,8 +212,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                  
 
                       // Password Field
                       const Text('Password'),

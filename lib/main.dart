@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:utmlostnfound/screens/authenticate/login_screen.dart';
 
-Future main() async{
+Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-  );
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -34,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     // Delay of 3 seconds before navigating to the next screen
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -49,9 +48,13 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Add your splash screen content here
-            //Image.asset('assets/lost_found_logo.png', width: 100, height: 100), // Logo image
-            //SizedBox(height: 20),
+            // Displaying the logo image before the title
+            Image.asset(
+              'assets/logo.png',  // The asset path to your image
+              width: 100,           // Adjust the width of the image
+              height: 100,          // Adjust the height of the image
+            ),
+            const SizedBox(height: 20), // Space between image and title
             Text(
               'UTM LOST & FOUND',
               style: TextStyle(
