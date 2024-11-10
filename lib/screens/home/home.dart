@@ -206,8 +206,8 @@ class LostAndFoundScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Image.asset(
-                                      'assets/asset1.jpg',  // The asset path to your image
-                                      fit: BoxFit.cover,         // Adjust the height of the image
+                                      'assets/asset1.jpg',  
+                                      fit: BoxFit.cover,   
                                     ),
                                   ),
                                 ),
@@ -231,8 +231,8 @@ class LostAndFoundScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Image.asset(
-                                      'assets/asset2.jpg',  // The asset path to your image
-                                      fit: BoxFit.cover,         // Adjust the height of the image
+                                      'assets/asset2.jpg',
+                                      fit: BoxFit.cover,     
                                     ),
                                   ),
                                 ),
