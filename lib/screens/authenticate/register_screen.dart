@@ -43,25 +43,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       // Register user with Firebase Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      String userId = userCredential.user!.uid;
+      User? user = userCredential.user;
 
-      // Store user data in Firestore with role "student"
-      await _firestore.collection('users').doc(userId).set({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'faculty': _selectedFaculty,
-        'role': 'student', // Set role to student
-      });
+      if (user != null) {
+        // Send email verification
+        await user.sendEmailVerification();
 
-      // Navigate to the home screen
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
-      );
+        // Store user data in Firestore with role "student"
+        await _firestore.collection('users').doc(user.uid).set({
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'faculty': _selectedFaculty,
+          'role': 'student', // Set role to student
+        });
+
+        // Show a dialog instructing the user to verify their email
+        _showVerificationDialog();
+      }
     } catch (e) {
       _showErrorDialog(e.toString());
     }
+  }
+
+  void _showVerificationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Verify Your Email"),
+        content: const Text("A verification email has been sent. Please verify your email before logging in."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Navigate back to the login screen
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showErrorDialog(String message) {
@@ -86,8 +107,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
             colors: [
               Color(0xFFFFE6E6), // Light pink color
               Color(0xFFDFFFD6), // Light green color
@@ -100,8 +121,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                
-                // Registration Box
                 Container(
                   padding: const EdgeInsets.all(20),
                   margin: const EdgeInsets.symmetric(horizontal: 30),
@@ -130,8 +149,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Name Field
                       const Text('Name'),
                       TextField(
                         controller: _nameController,
@@ -145,8 +162,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                      // Email Field
                       const Text('Email'),
                       TextField(
                         controller: _emailController,
@@ -160,8 +175,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                      // Faculty Dropdown
                       const Text('Faculty'),
                       Container(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -197,8 +210,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                      // Phone Number Field
                       const Text('Phone Number'),
                       TextField(
                         controller: _phoneController,
@@ -212,8 +223,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                      // Password Field
                       const Text('Password'),
                       TextField(
                         controller: _passwordController,
@@ -238,8 +247,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                      // Confirm Password Field
                       const Text('Confirm Password'),
                       TextField(
                         controller: _confirmPasswordController,
@@ -264,8 +271,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Submit Button
                       Center(
                         child: ElevatedButton(
                           onPressed: _registerUser,
@@ -277,8 +282,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 15),
-
-                      // Sign In Link
                       Center(
                         child: TextButton(
                           onPressed: () {

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/main.dart';
+import 'package:utmlostnfound/screens/home/profile.dart';
+
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final String image;
 
-  const CustomAppBar({Key? key, required this.title, required TextStyle style}) : super(key: key);
+  const CustomAppBar({super.key, required this.title, required TextStyle style, required this.image});
 
   Future<void> _handleLogout(BuildContext context) async {
     final bool? logoutConfirmed = await showDialog<bool>(
@@ -50,10 +53,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   void _onMenuSelected(BuildContext context, String value) {
     switch (value) {
       case 'profile':
-        // Add navigation to Profile page here
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Navigating to Profile")),
-        );
+         // Navigate to Profile page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      );
         break;
       case 'settings':
         // Add navigation to Settings page here

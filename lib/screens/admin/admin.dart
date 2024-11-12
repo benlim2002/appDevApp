@@ -31,12 +31,14 @@ class AdminScreen extends StatelessWidget {
     },
   ];
 
+   AdminScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(  // Use CustomAppBar here
         title: "Admin Dashboard",  // You can customize the title if needed
-        style: TextStyle(fontWeight: FontWeight.bold),
+        style: TextStyle(fontWeight: FontWeight.bold), image: '',
       ),
       body: ListView.builder(
         itemCount: items.length,

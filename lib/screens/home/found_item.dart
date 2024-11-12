@@ -28,7 +28,7 @@ class FoundItemScreen extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(
         title: "Found Item",
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        style: TextStyle(fontWeight: FontWeight.bold), image: '',
       ),
       body: Container(
         decoration: const BoxDecoration(

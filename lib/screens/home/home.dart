@@ -30,7 +30,8 @@ class LostAndFoundScreen extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(
         title: "Home",
-        style: TextStyle(fontWeight: FontWeight.bold),
+        style: TextStyle(fontWeight: FontWeight.bold), image: 'assets/logo.png',
+         // Path to your logo image,
       ),
       body: Column(
         children: [
@@ -181,8 +182,8 @@ class LostAndFoundScreen extends StatelessWidget {
                         ],
                       ),
                       Transform.translate(
-                        offset: Offset(-20, 0),
-                        child: Container(
+                        offset: const Offset(-20, 0),
+                        child: SizedBox(
                           height: 250,
                           child: Stack(
                             alignment: Alignment.center,
@@ -200,14 +201,14 @@ class LostAndFoundScreen extends StatelessWidget {
                                           color: Colors.black.withOpacity(0.2),
                                           spreadRadius: 2,
                                           blurRadius: 10,
-                                          offset: Offset(5, 5),
+                                          offset: const Offset(5, 5),
                                         ),
                                       ],
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Image.asset(
-                                      'assets/asset1.jpg',  // The asset path to your image
-                                      fit: BoxFit.cover,         // Adjust the height of the image
+                                      'assets/asset1.jpg',  
+                                      fit: BoxFit.cover,   
                                     ),
                                   ),
                                 ),
@@ -225,14 +226,14 @@ class LostAndFoundScreen extends StatelessWidget {
                                           color: Colors.black.withOpacity(0.2),
                                           spreadRadius: 2,
                                           blurRadius: 10,
-                                          offset: Offset(5, 5),
+                                          offset: const Offset(5, 5),
                                         ),
                                       ],
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Image.asset(
-                                      'assets/asset2.jpg',  // The asset path to your image
-                                      fit: BoxFit.cover,         // Adjust the height of the image
+                                      'assets/asset2.jpg',
+                                      fit: BoxFit.cover,     
                                     ),
                                   ),
                                 ),
@@ -250,7 +251,7 @@ class LostAndFoundScreen extends StatelessWidget {
                                           color: Colors.black.withOpacity(0.2),
                                           spreadRadius: 2,
                                           blurRadius: 10,
-                                          offset: Offset(5, 5),
+                                          offset: const Offset(5, 5),
                                         ),
                                       ],
                                       borderRadius: BorderRadius.circular(8),

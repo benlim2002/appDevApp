@@ -24,26 +24,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signIn() async {
     try {
-      // Sign in with Firebase Auth
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Get the current user's ID
       final user = _auth.currentUser;
       if (user != null) {
-        // Fetch user role from Firestore
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .get();
 
-        // Check if the document exists and retrieve the role
         if (userDoc.exists) {
           String? role = userDoc.get('role');
-          
-          // Redirect based on the role
           if (role == 'admin') {
             Navigator.pushReplacement(
               context,
@@ -55,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => SecurityScreen()),
             );
           } else {
-            // Default to student role or general user
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
@@ -68,21 +61,18 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } on FirebaseAuthException catch (e) {
-      // Handle FirebaseAuth-specific errors
       setState(() {
         _errorMessage = _getFriendlyErrorMessage(e.code);
       });
     } catch (e) {
-      // Handle any other errors
       setState(() {
         _errorMessage = "An unexpected error occurred. Please try again.";
       });
     }
   }
 
-  // Helper function to map Firebase exceptions to user-friendly messages
-  String _getFriendlyErrorMessage(String _errorMessage) {
-    switch (_errorMessage) {
+  String _getFriendlyErrorMessage(String errorMessage) {
+    switch (errorMessage) {
       case 'user-not-found':
         return "No account found with this email.";
       case 'wrong-password':
@@ -114,6 +104,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    try {
+      await _auth.sendPasswordResetEmail(email: _emailController.text.trim());
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Password Reset"),
+          content: const Text("A password reset link has been sent to your email."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = _getFriendlyErrorMessage(e.code);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,8 +136,8 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              Color(0xFFFFE6E6), // Light pink color
-              Color(0xFFDFFFD6), // Light green color
+              Color(0xFFFFE6E6),
+              Color(0xFFDFFFD6),
             ],
           ),
         ),
@@ -178,10 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      const Text(
-                        'Email',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      const Text('Email', style: TextStyle(fontSize: 16)),
                       TextField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -195,10 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      const Text(
-                        'Password',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      const Text('Password', style: TextStyle(fontSize: 16)),
                       TextField(
                         controller: _passwordController,
                         obscureText: _isObscure,
@@ -235,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error, color: Colors.redAccent),
+                                const Icon(Icons.error, color: Colors.redAccent),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -276,26 +283,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 15),
 
-                      // Anonymous Sign-In Button
                       Center(
                         child: ElevatedButton(
                           onPressed: _signInAnonymously,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400], // Set a different color if desired
+                            backgroundColor: Colors.grey[400],
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                           ),
                           child: const Text('Sign in as Guest'),
                         ),
                       ),
-
                       const SizedBox(height: 15),
+
                       Center(
                         child: TextButton(
-                          onPressed: () {
-                            // Forgot Password action
-                          },
+                          onPressed: _resetPassword,
                           child: const Text(
-                            'Forget Password?',
+                            'Forgot Password?',
                             style: TextStyle(color: Colors.black54),
                           ),
                         ),
