@@ -30,8 +30,7 @@ class LostAndFoundScreen extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(
         title: "Home",
-        style: TextStyle(fontWeight: FontWeight.bold), image: 'assets/logo.png',
-         // Path to your logo image,
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       body: Column(
         children: [

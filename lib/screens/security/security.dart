@@ -30,14 +30,14 @@ class SecurityScreen extends StatelessWidget {
     },
   ];
 
-   SecurityScreen({super.key});
+  SecurityScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(  // Replacing default AppBar with CustomAppBar
         title: "Security Personnel Dashboard",  // Customize the title if needed
-        style: TextStyle(fontWeight: FontWeight.bold), image: '',
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       body: ListView.builder(
         itemCount: items.length,
