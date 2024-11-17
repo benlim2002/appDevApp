@@ -1,10 +1,11 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/appbar.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ReportLostItemScreen extends StatefulWidget {
   const ReportLostItemScreen({super.key});
@@ -75,19 +76,31 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
       File file = File(pickedFile.path);
 
       try {
-        String fileName = 'lost_items/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        // Cloudinary credentials
+        const cloudName = "dqqb4c714";
+        const uploadPreset = "pics_upload"; // Replace with a valid unsigned preset
 
-        UploadTask task = FirebaseStorage.instance.ref(fileName).putFile(file);
-        TaskSnapshot snapshot = await task;
-        String downloadUrl = await snapshot.ref.getDownloadURL();
+        final uri = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
 
-        setState(() {
-          _photoUrl = downloadUrl;
-        });
+        var request = http.MultipartRequest('POST', uri);
+        request.fields['upload_preset'] = uploadPreset;
+        request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo uploaded successfully!')),
-        );
+        var response = await request.send();
+        if (response.statusCode == 200) {
+          final responseData = await response.stream.bytesToString();
+          final jsonResponse = json.decode(responseData);
+
+          setState(() {
+            _photoUrl = jsonResponse['secure_url'];
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Photo uploaded successfully!')),
+          );
+        } else {
+          throw Exception('Failed to upload photo to Cloudinary');
+        }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to upload photo: $e')),

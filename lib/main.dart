@@ -50,11 +50,11 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             // Displaying the logo image before the title
             Image.asset(
-              'assets/logo.png',  // The asset path to your image
-              width: 100,           // Adjust the width of the image
-              height: 100,          // Adjust the height of the image
+              'assets/logo.png', 
+              width: 100,        
+              height: 100,          
             ),
-            const SizedBox(height: 20), // Space between image and title
+            const SizedBox(height: 20), 
             Text(
               'UTM LOST & FOUND',
               style: TextStyle(

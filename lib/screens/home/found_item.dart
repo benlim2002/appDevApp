@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:utmlostnfound/appbar.dart';
-import 'package:utmlostnfound/screens/home/item_details.dart'; 
+import 'package:utmlostnfound/screens/home/item_details.dart';
 
 class FoundItemScreen extends StatelessWidget {
   const FoundItemScreen({super.key});
@@ -117,7 +117,7 @@ class FoundItemScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 10),
 
-                              // Item image placeholder
+                              // Item image placeholder or actual image
                               Container(
                                 height: 150,
                                 width: double.infinity,
@@ -125,11 +125,32 @@ class FoundItemScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   color: Colors.grey[300],
                                 ),
-                                child: const Icon(
-                                  Icons.image_not_supported,
-                                  size: 50,
-                                  color: Colors.grey,
-                                ),
+                                child: data['photo_url'] != null && data['photo_url'] != ''
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          data['photo_url'],
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, progress) {
+                                            if (progress == null) return child;
+                                            return const Center(
+                                              child: CircularProgressIndicator(),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return const Icon(
+                                              Icons.broken_image,
+                                              color: Colors.grey,
+                                              size: 50,
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.image_not_supported,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
                               ),
                               const SizedBox(height: 10),
 
