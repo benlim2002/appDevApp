@@ -5,7 +5,7 @@ import 'package:utmlostnfound/main.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
-  const CustomAppBar({super.key, required this.title, required TextStyle style});
+  const CustomAppBar({super.key, required this.title});
 
   Future<void> _handleLogout(BuildContext context) async {
     final bool? logoutConfirmed = await showDialog<bool>(

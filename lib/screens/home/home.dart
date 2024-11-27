@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:utmlostnfound/screens/home/report_item.dart';
 import 'package:utmlostnfound/screens/home/found_item.dart';
-import 'package:utmlostnfound/appbar.dart';
+import 'package:utmlostnfound/appbar.dart';  // Import CustomAppBar
 import 'package:marquee/marquee.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,12 +28,13 @@ class LostAndFoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Use the CustomAppBar which already has the drawer functionality
       appBar: const CustomAppBar(
         title: "Home",
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
+      ), // Drawer is provided by CustomDrawer
       body: Column(
         children: [
+          // Marquee Welcome Message
           Container(
             color: const Color.fromARGB(255, 170, 206, 247),
             height: 25,
@@ -157,7 +158,7 @@ class LostAndFoundScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => FoundItemScreen()),
+                                MaterialPageRoute(builder: (context) => const FoundItemScreen()),
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -206,8 +207,8 @@ class LostAndFoundScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Image.asset(
-                                      'assets/asset1.jpg',  
-                                      fit: BoxFit.cover,   
+                                      'assets/asset1.jpg',
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
                                 ),
@@ -232,7 +233,7 @@ class LostAndFoundScreen extends StatelessWidget {
                                     ),
                                     child: Image.asset(
                                       'assets/asset2.jpg',
-                                      fit: BoxFit.cover,     
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
                                 ),

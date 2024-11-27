@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,6 +23,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordObscure = true;
   bool _isConfirmPasswordObscure = true;
   String? _selectedFaculty;
+  File? _profileImage;  // Variable to hold the selected image
+
+  // Method to pick an image from the gallery
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
 
   Future<void> _registerUser() async {
     final email = _emailController.text.trim();
@@ -114,45 +129,110 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  margin: const EdgeInsets.symmetric(horizontal: 30),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Text(
-                          'Register',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.brown[800],
-                          ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 80),
+              Container(
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.symmetric(horizontal: 30),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Register',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown[800],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      const Text('Name'),
-                      TextField(
-                        controller: _nameController,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Add Image Picker here
+                    Center(
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: _profileImage != null
+                              ? FileImage(_profileImage!)
+                              : null,
+                          child: _profileImage == null
+                              ? Icon(Icons.add_a_photo, size: 30)
+                              : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20), // Space below image picker
+                    
+                    const Text('Name'),
+                    TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your name',
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text('Email'),
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your UTM email',
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text('Faculty'),
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: _selectedFaculty,
+                        items: [
+                          'Faculty of Computing', 
+                          'Faculty of Civil Engineering', 
+                          'Faculty of Mechanical Engineering', 
+                          'Faculty of Electrical Engineering', 
+                          'Faculty of Chemical and Energy Engineering', 
+                          'Faculty of Science', 
+                          'Faculty of Built Environment and Surveying ', 
+                          'Faculty of Management',
+                          'Faculty of Social Sciences and Humanities'
+                        ].map((faculty) => DropdownMenuItem(
+                          value: faculty,
+                          child: Text(faculty),
+                        )).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedFaculty = value;
+                          });
+                        },
                         decoration: InputDecoration(
-                          hintText: 'Enter your name',
                           filled: true,
                           fillColor: Colors.grey[200],
                           border: OutlineInputBorder(
@@ -160,143 +240,95 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      const Text('Email'),
-                      TextField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your UTM email',
-                          filled: true,
-                          fillColor: Colors.grey[200],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text('Phone Number'),
+                    TextField(
+                      controller: _phoneController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your phone number',
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      const Text('Faculty'),
-                      Container(
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: _selectedFaculty,
-                          items: [
-                            'Faculty of Computing', 
-                            'Faculty of Civil Engineering', 
-                            'Faculty of Mechanical Engineering', 
-                            'Faculty of Electrical Engineering', 
-                            'Faculty of Chemical and Energy Engineering', 
-                            'Faculty of Science', 
-                            'Faculty of Built Environment and Surveying ', 
-                            'Faculty of Management',
-                            'Faculty of Social Sciences and Humanities'
-                          ].map((faculty) => DropdownMenuItem(
-                            value: faculty,
-                            child: Text(faculty),
-                          )).toList(),
-                          onChanged: (value) {
+                    ),
+                    const SizedBox(height: 15),
+                    const Text('Password'),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _isPasswordObscure,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your password',
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(_isPasswordObscure
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () {
                             setState(() {
-                              _selectedFaculty = value;
+                              _isPasswordObscure = !_isPasswordObscure;
                             });
                           },
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                            ),
-                          ),
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      const Text('Phone Number'),
-                      TextField(
-                        controller: _phoneController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your phone number',
-                          filled: true,
-                          fillColor: Colors.grey[200],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text('Confirm Password'),
+                    TextField(
+                      controller: _confirmPasswordController,
+                      obscureText: _isConfirmPasswordObscure,
+                      decoration: InputDecoration(
+                        hintText: 'Confirm your password',
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      const Text('Password'),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: _isPasswordObscure,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password',
-                          filled: true,
-                          fillColor: Colors.grey[200],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(_isPasswordObscure
-                                ? Icons.visibility_off
-                                : Icons.visibility),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordObscure = !_isPasswordObscure;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      const Text('Confirm Password'),
-                      TextField(
-                        controller: _confirmPasswordController,
-                        obscureText: _isConfirmPasswordObscure,
-                        decoration: InputDecoration(
-                          hintText: 'Confirm your password',
-                          filled: true,
-                          fillColor: Colors.grey[200],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(_isConfirmPasswordObscure
-                                ? Icons.visibility_off
-                                : Icons.visibility),
-                            onPressed: () {
-                              setState(() {
-                                _isConfirmPasswordObscure = !_isConfirmPasswordObscure;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: _registerUser,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 250, 227, 222),
-                            padding: const EdgeInsets.symmetric(horizontal: 30),
-                          ),
-                          child: const Text('Submit'),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Center(
-                        child: TextButton(
+                        suffixIcon: IconButton(
+                          icon: Icon(_isConfirmPasswordObscure
+                              ? Icons.visibility_off
+                              : Icons.visibility),
                           onPressed: () {
-                            Navigator.pop(context); // Navigate back to login
+                            setState(() {
+                              _isConfirmPasswordObscure = !_isConfirmPasswordObscure;
+                            });
                           },
-                          child: const Text(
-                            'Already have an account? Sign in',
-                            style: TextStyle(color: Colors.black54),
-                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _registerUser,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 250, 227, 222),
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                        ),
+                        child: const Text('Submit'),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Navigate back to login
+                        },
+                        child: const Text(
+                          'Already have an account? Sign in',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:utmlostnfound/screens/admin/admin_dashboard.dart';
 import 'package:utmlostnfound/screens/authenticate/register_screen.dart';
 import 'package:utmlostnfound/screens/home/home.dart';
-import 'package:utmlostnfound/screens/admin/admin.dart';
+
 import 'package:utmlostnfound/screens/security/security.dart';
 import 'package:utmlostnfound/services/services.dart';
 
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (role == 'admin') {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => AdminScreen()),
+              MaterialPageRoute(builder: (context) => AdminDashboard()),
             );
           } else if (role == 'security') {
             Navigator.pushReplacement(

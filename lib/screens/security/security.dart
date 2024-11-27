@@ -37,7 +37,6 @@ class SecurityScreen extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(  // Replacing default AppBar with CustomAppBar
         title: "Security Personnel Dashboard",  // Customize the title if needed
-        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       body: ListView.builder(
         itemCount: items.length,

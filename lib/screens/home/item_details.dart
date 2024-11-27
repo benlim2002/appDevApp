@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:utmlostnfound/appbar.dart'; // Import your custom app bar
 
 class ItemDetailsScreen extends StatelessWidget {
@@ -6,12 +7,18 @@ class ItemDetailsScreen extends StatelessWidget {
 
   const ItemDetailsScreen({super.key, required this.item});
 
+  String _formatTimestamp(int timestamp) {
+  final DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+  final DateFormat formatter = DateFormat('h:mm a'); // 12-hour format with AM/PM
+  return formatter.format(dateTime);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
         title: "Item Details", // App bar title
-        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -105,41 +112,42 @@ class ItemDetailsScreen extends StatelessWidget {
                             const SizedBox(height: 20),
 
                             // Found By Section with Contact Button
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: Colors.brown[200],
-                                      child: Text(
-                                        item['name']?.substring(0, 1) ?? '?',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Found by: ${item['name'] ?? 'Unknown User'}",
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                        Text(
-                                          item['date'] ?? '',
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: Colors.brown[200],
+                                        child: Text(
+                                          item['name']?.substring(0, 1) ?? '?',
                                           style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black54,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "${item['name'] ?? 'Unknown User'}",
+                                            style: const TextStyle(fontSize: 16),
+                                          ),
+                                          Text(
+                                            "${item['date'] ?? ''} - ${_formatTimestamp(item['timestamp'])}", // Add timestamp here
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
                                 ElevatedButton(
                                   onPressed: () {
                                     final contact = item['contact'] ?? 'Unknown Contact';

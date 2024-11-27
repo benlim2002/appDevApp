@@ -70,7 +70,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
 
   Future<void> _uploadPhoto() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: ImageSource.camera); // Use the camera
 
     if (pickedFile != null) {
       File file = File(pickedFile.path);
@@ -78,7 +78,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
       try {
         // Cloudinary credentials
         const cloudName = "dqqb4c714";
-        const uploadPreset = "pics_upload"; // Replace with a valid unsigned preset
+        const uploadPreset = "pics_upload";
 
         final uri = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
 
@@ -108,17 +108,17 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No photo selected!')),
+        const SnackBar(content: Text('No photo taken!')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
         title: "Report Lost Item",
-        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -248,15 +248,21 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                                   FirebaseFirestore.instance.collection('lost_items');
 
                               try {
+                                // Format the selected date to 'YYYY-MM-DD' format
+                                final formattedDate = _selectedDate != null
+                                    ? "${_selectedDate!.toLocal()}".split(' ')[0]
+                                    : null;
+
                                 await lostItems.add({
                                   'name': _nameController.text,
                                   'item': _itemController.text,
                                   'contact': _contactController.text,
                                   'location': _locationController.text,
-                                  'date': _selectedDate?.toIso8601String(),
+                                  'date': formattedDate, // Save only the formatted date
                                   'description': _descriptionController.text,
                                   'photo_url': _photoUrl,
                                   'timestamp': DateTime.now().millisecondsSinceEpoch,
+                                  'status': 'lost',
                                 });
 
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -301,7 +307,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text("Reset"),
+                          child: const Text("Reset", style: TextStyle(color: Colors.black)),
                         ),
                       ],
                     ),
@@ -317,32 +323,31 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
 
   Widget _buildField(String label, String hint, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
-          TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              hintText: hint,
-              filled: true,
-              fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("$label:", style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: Colors.grey[100],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter $label';
-              }
-              return null;
-            },
           ),
-        ],
-      ),
+          keyboardType: keyboardType,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter $label.toLowerCase()';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 15),
+      ],
     );
   }
 }
