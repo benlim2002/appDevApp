@@ -12,7 +12,6 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int totalItems = 0;
   int itemsFound = 0;
@@ -54,6 +53,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       setState(() {
         isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading dashboard data: $error')),
+      );
     }
   }
 
@@ -95,44 +97,54 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AdminAppBar(
         title: "Admin Dashboard",
-        scaffoldKey: _scaffoldKey,
+        scaffoldKey: GlobalKey<ScaffoldState>(),
       ),
-      drawer: AdminAppBar(title: "", scaffoldKey: _scaffoldKey).buildDrawer(context),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (isLoading) ...[
-              const Center(child: CircularProgressIndicator()), // Show a loading spinner while metrics are loading
-            ] else ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMetricCard("Total Items", totalItems),
-                  _buildMetricCard("Items Found", itemsFound),
-                  _buildMetricCard("Items Lost", itemsLost),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: allItems.length + 1, // Add 1 for the "Load More" button
-                  itemBuilder: (context, index) {
-                    if (index == allItems.length) {
-                      return _buildLoadMoreButton();
-                    }
-
-                    final item = allItems[index].data() as Map<String, dynamic>;
-                    return _buildListItem(item);
-                  },
-                ),
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFF9E6D5), // Soft pale peach
+              Color(0xFFD5EAE8), // Light blue-gray
             ],
-          ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (isLoading) ...[
+                const Center(child: CircularProgressIndicator()), // Show a loading spinner while metrics are loading
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildMetricCard("Total Items", totalItems),
+                    _buildMetricCard("Items Found", itemsFound),
+                    _buildMetricCard("Items Lost", itemsLost),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: allItems.length + (isPaginating ? 1 : 0), // Add 1 for the loading indicator at the end
+                    itemBuilder: (context, index) {
+                      if (index == allItems.length) {
+                        return _buildLoadMoreButton();
+                      }
+
+                      final item = allItems[index].data() as Map<String, dynamic>;
+                      return _buildListItem(item);
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -141,18 +153,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildMetricCard(String title, int value) {
     return Card(
       elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.symmetric(horizontal: 8), // Adds spacing between cards
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        constraints: const BoxConstraints(maxWidth: 120), // Limit the width of the card
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 14, // Slightly smaller font
+                fontWeight: FontWeight.bold,
+                overflow: TextOverflow.ellipsis, // Ensure text doesn't overflow
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               value.toString(),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontSize: 18, // Adjust font size for numbers
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -175,30 +198,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   // List item display
   Widget _buildListItem(Map<String, dynamic> item) {
-  return Card(
-    elevation: 2,
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    child: ListTile(
-      leading: Padding(
-        padding: const EdgeInsets.only(top: 10.0), // Adjust this value to move the image lower
-        child: item['photo_url'] != null && item['photo_url'].isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: item['photo_url'],
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => const CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                ),
-              )
-            : const Icon(Icons.image_not_supported),
-      ),
-      title: Text(item['name'] ?? 'Unknown Item'),
-      subtitle: Text(
-        'Status: ${item['status']}\nDescription: ${item['description'] ?? "No description"}',
-      ),
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 10.0), // Adjust this value to move the image lower
+          child: item['photo_url'] != null && item['photo_url'].isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: item['photo_url'],
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                  ),
+                )
+              : const Icon(Icons.image_not_supported),
+        ),
+        title: Text(item['name'] ?? 'Unknown Item'),
+        subtitle: Text(
+          'Status: ${item['status']}\nDescription: ${item['description'] ?? "No description"}',
+        ),
         isThreeLine: true,
       ),
     );

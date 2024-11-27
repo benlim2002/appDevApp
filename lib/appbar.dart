@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/main.dart';
+import 'package:utmlostnfound/screens/home/profile.dart'; // Make sure to import your ProfileScreen here
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -50,9 +51,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   void _onMenuSelected(BuildContext context, String value) {
     switch (value) {
       case 'profile':
-        // Add navigation to Profile page here
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Navigating to Profile")),
+        // Navigate to ProfileScreen when Profile is selected
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()), // Navigate to ProfileScreen
         );
         break;
       case 'settings':
@@ -69,25 +71,44 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use the app's TextTheme for the title and PopupMenuItems
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     return AppBar(
-      title: Text(title),
+      title: Text(
+        title,
+        style: textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w900, // Make the title bold
+          fontSize: 26, // Optional: increase font size for more emphasis
+          letterSpacing: 0.1,
+        ),
+      ),
       centerTitle: true,
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) => _onMenuSelected(context, value),
           itemBuilder: (BuildContext context) {
             return [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'profile',
-                child: Text("Profile"),
+                child: Text(
+                  "Profile",
+                  style: textTheme.bodyMedium, // Use bodyText2 style for consistency
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'settings',
-                child: Text("Settings"),
+                child: Text(
+                  "Settings",
+                  style: textTheme.bodyMedium, // Use bodyText2 style for consistency
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'logout',
-                child: Text("Logout"),
+                child: Text(
+                  "Logout",
+                  style: textTheme.bodyMedium, // Use bodyText2 style for consistency
+                ),
               ),
             ];
           },
@@ -96,7 +117,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 242, 234, 243)], // Set your gradient colors
+            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 242, 234, 243)],
             begin: Alignment.center,
             end: Alignment.bottomRight,
           ),

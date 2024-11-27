@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:utmlostnfound/screens/admin/admin_appbar.dart';  // Import the AdminAppBar
-import 'package:utmlostnfound/screens/admin/view_users.dart'; // Import the view_users screen
 
 class AddSecurityPersonnelScreen extends StatefulWidget {
   const AddSecurityPersonnelScreen({Key? key}) : super(key: key);
@@ -106,14 +105,6 @@ class _AddSecurityPersonnelScreenState
           const SnackBar(content: Text("Security personnel added successfully!")),
         );
 
-        // Navigate to the security page of view_users.dart
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ViewUsersScreen(), // Pass 'security' role to the ViewUsersScreen
-          ),
-        );
-
         _nameController.clear();
         _emailController.clear();
         _passwordController.clear();
@@ -140,127 +131,145 @@ class _AddSecurityPersonnelScreenState
     );
   }
 
+  Widget _buildField(
+    String label, String hint, TextEditingController controller,
+    {TextInputType keyboardType = TextInputType.text}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "$label:",
+        style: const TextStyle(fontSize: 16),
+      ),
+      const SizedBox(height: 5),
+      TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          hintStyle: TextStyle( // Customize the hint text style here
+            fontStyle: FontStyle.normal,
+            fontSize: 14,
+            color: Colors.grey[500], // Lighter color for the hint
+          ),
+        ),
+        keyboardType: keyboardType,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter ${label.toLowerCase()}';
+          }
+          return null;
+        },
+      ),
+      const SizedBox(height: 15),
+    ],
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+      key: _scaffoldKey, // Assign the scaffold key to the Scaffold
       appBar: AdminAppBar(
-        title: "Add Security Personnel",
-        scaffoldKey: _scaffoldKey,
+        title: "Add Security Personnel", // Title of the AppBar
+        scaffoldKey: _scaffoldKey, // Pass the scaffold key to AdminAppBar
       ),
-      drawer: AdminAppBar(
-        title: "",
-        scaffoldKey: _scaffoldKey,
-      ).buildDrawer(context),
-      body: SingleChildScrollView( // Wrap with SingleChildScrollView
+      // No need to manually call buildDrawer here, it's handled inside AdminAppBar
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFF9E6D5), // Soft pale peach
+              Color(0xFFD5EAE8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: Container(
-              width: 325, // Narrowing the form by setting a fixed width
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Enter Details',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
+          padding: const EdgeInsets.all(16.0), // Optional: Adjust padding here
+          child: Column(
+            children: [
+              const SizedBox(height: 0), // Remove extra space here
 
-                  // Photo upload section
-                  const Text('Profile Photo (Optional)'),
-                  GestureDetector(
-                    onTap: _uploadPhoto,
-                    child: _imageFile == null
-                        ? Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.grey[200],
-                            ),
-                            child: const Icon(Icons.camera_alt, size: 40),
-                          )
-                        : Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              image: DecorationImage(
-                                image: FileImage(_imageFile!),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+              // Centered container that holds the form and profile section
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: double.infinity, // Ensures it spans the available width
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 5, spreadRadius: 2),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center, // Center align the content
+                        children: [
+                          const SizedBox(height: 20), // Reduce space before "Enter Details"
+                          const Text(
+                            'Enter Details',
+                            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
                           ),
-                  ),
-                  const SizedBox(height: 15),
+                          const SizedBox(height: 20),
 
-                  const Text('Name'),
-                  TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter security personnel\'s name',
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
+                          // Profile Photo section centered
+                          GestureDetector(
+                            onTap: _uploadPhoto,
+                            child: _imageFile == null
+                                ? Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.grey[200],
+                                    ),
+                                    child: const Icon(Icons.camera_alt, size: 40),
+                                  )
+                                : Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      image: DecorationImage(
+                                        image: FileImage(_imageFile!),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                          const SizedBox(height: 15),
 
-                  const Text('Email'),
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter email',
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
+                          // Form fields with reduced space above them
+                          _buildField("Name", "Enter security personnel's name", _nameController),
+                          _buildField("Email", "Enter email", _emailController),
+                          _buildField("Password", "Enter password", _passwordController),
+                          const SizedBox(height: 20),
 
-                  const Text('Password'),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _isPasswordObscure,
-                    decoration: InputDecoration(
-                      hintText: 'Enter password',
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(_isPasswordObscure
-                            ? Icons.visibility_off
-                            : Icons.visibility),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordObscure = !_isPasswordObscure;
-                          });
-                        },
+                          // Add Security Personnel button
+                          ElevatedButton(
+                            onPressed: _addSecurityPersonnel,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 250, 227, 222),
+                              padding: const EdgeInsets.symmetric(horizontal: 30),
+                            ),
+                            child: const Text('Add Security Personnel'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _addSecurityPersonnel,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 250, 227, 222),
-                        padding: const EdgeInsets.symmetric(horizontal: 30),
-                      ),
-                      child: const Text('Add Security Personnel'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

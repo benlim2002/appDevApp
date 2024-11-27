@@ -36,14 +36,14 @@ class LostAndFoundScreen extends StatelessWidget {
         children: [
           // Marquee Welcome Message
           Container(
-            color: const Color.fromARGB(255, 170, 206, 247),
+            color: const Color(0xFFF8E0D5), // Light peach/pale pink color
             height: 25,
             child: Marquee(
               text: 'Welcome to UTM Lost & Found! Keep an eye out for updates and announcements here.',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.normal,
-                color: Color.fromARGB(255, 255, 249, 196),
+                color: Color.fromARGB(255, 100, 100, 100), // Soft pale yellow color
               ),
               scrollAxis: Axis.horizontal,
               blankSpace: 100,
@@ -59,8 +59,8 @@ class LostAndFoundScreen extends StatelessWidget {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Color(0xFFFFE6E6), // Light pink color
-                    Color(0xFFDFFFD6), // Light green color
+                    Color(0xFFF9E6D5), // Soft pale peach
+                    Color(0xFFD5EAE8), // Light pastel turquoise
                   ],
                 ),
               ),
@@ -70,22 +70,18 @@ class LostAndFoundScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      const SizedBox(height: 15),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.cable, size: 40, color: Colors.brown[800]),
-                          const SizedBox(width: 10),
-                          Text(
-                            'UTM LOST & FOUND',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.brown[800],
-                            ),
+                          Image.asset(
+                            'assets/home.png', // Path to the image
+                            height: 250, // Adjust the height as needed
+                            width: 250, // Adjust the width as needed
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      //const SizedBox(height: 20),
                       const Text(
                         'Find it fast, return it faster',
                         style: TextStyle(
@@ -124,7 +120,7 @@ class LostAndFoundScreen extends StatelessWidget {
                           }
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 25),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -136,7 +132,7 @@ class LostAndFoundScreen extends StatelessWidget {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
+                              backgroundColor: const Color(0xFFB2D8E1), // Soft pastel blue
                               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -162,7 +158,7 @@ class LostAndFoundScreen extends StatelessWidget {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.greenAccent,
+                              backgroundColor: const Color(0xFFB7E2C6), // Light pastel green
                               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -181,92 +177,7 @@ class LostAndFoundScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Transform.translate(
-                        offset: const Offset(-20, 0),
-                        child: SizedBox(
-                          height: 250,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Align(
-                                alignment: Alignment.center,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 0, top: 0),
-                                  child: Container(
-                                    width: 125,
-                                    height: 125,
-                                    decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          spreadRadius: 2,
-                                          blurRadius: 10,
-                                          offset: const Offset(5, 5),
-                                        ),
-                                      ],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Image.asset(
-                                      'assets/asset1.jpg',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.center,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 60, top: 60),
-                                  child: Container(
-                                    width: 125,
-                                    height: 125,
-                                    decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          spreadRadius: 2,
-                                          blurRadius: 10,
-                                          offset: const Offset(5, 5),
-                                        ),
-                                      ],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Image.asset(
-                                      'assets/asset2.jpg',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.center,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 120, top: 120),
-                                  child: Container(
-                                    width: 125,
-                                    height: 125,
-                                    decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          spreadRadius: 2,
-                                          blurRadius: 10,
-                                          offset: const Offset(5, 5),
-                                        ),
-                                      ],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Image.asset(
-                                      'assets/asset3.jpg',  // The asset path to your image
-                                      fit: BoxFit.cover,         // Adjust the height of the image
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 200),
                     ],
                   ),
                 ),

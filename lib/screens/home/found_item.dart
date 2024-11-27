@@ -3,8 +3,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:utmlostnfound/appbar.dart';
 import 'package:utmlostnfound/screens/home/item_details.dart';
 
-class FoundItemScreen extends StatelessWidget {
+class FoundItemScreen extends StatefulWidget {
   const FoundItemScreen({super.key});
+
+  @override
+  _FoundItemScreenState createState() => _FoundItemScreenState();
+}
+
+class _FoundItemScreenState extends State<FoundItemScreen> {
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // This function is called whenever the search text is changed
+  void _onSearch(String query) {
+    setState(() {
+      _searchQuery = query.toLowerCase();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,8 +33,8 @@ class FoundItemScreen extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              Color(0xFFFFE6E6),
-              Color(0xFFDFFFD6),
+              Color(0xFFF9E6D5), // Soft pale peach
+              Color(0xFFD5EAE8),
             ],
           ),
         ),
@@ -28,26 +43,31 @@ class FoundItemScreen extends StatelessWidget {
           children: [
             // Search Field
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 0),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   hintText: "Search Found Items",
+                  hintStyle: TextStyle( // Customize the hint text style here
+                    fontStyle: FontStyle.normal,
+                    fontSize: 14,
+                    color: Colors.grey[500], // Lighter color for the hint
+                  ),
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderRadius: BorderRadius.circular(30.0),
                   ),
                 ),
-                onChanged: (value) {
-                  // Handle search functionality
-                },
+                onChanged: _onSearch, // Update search query
               ),
             ),
+            const SizedBox(height: 15),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('lost_items') // Replace with your collection name
+                    .collection('lost_items') // Use your correct collection
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -60,7 +80,17 @@ class FoundItemScreen extends StatelessWidget {
                     );
                   }
 
-                  final foundItems = snapshot.data!.docs;
+                  // Filter the found items based on the search query
+                  final foundItems = snapshot.data!.docs.where((item) {
+                    final data = item.data() as Map<String, dynamic>;
+                    final itemName = data['item']?.toLowerCase() ?? '';
+                    final itemLocation = data['location']?.toLowerCase() ?? '';
+                    final itemDescription = data['description']?.toLowerCase() ?? '';
+                    // If any of the fields match the search query
+                    return itemName.contains(_searchQuery) ||
+                        itemLocation.contains(_searchQuery) ||
+                        itemDescription.contains(_searchQuery);
+                  }).toList();
 
                   return ListView.builder(
                     itemCount: foundItems.length,
@@ -189,6 +219,7 @@ class FoundItemScreen extends StatelessWidget {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.brown[400],
+                                    foregroundColor: Colors.white,
                                   ),
                                   child: const Text("Contact"),
                                 ),

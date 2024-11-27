@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/screens/admin/admin_dashboard.dart'; // Admin Dashboard screen
-import 'package:utmlostnfound/screens/admin/approval.dart'; // Approval screen
+import 'package:utmlostnfound/screens/admin/appointment.dart'; // Approval screen
 import 'package:utmlostnfound/main.dart'; // Your main app entry
 import 'package:utmlostnfound/screens/admin/view_users.dart';
 import 'package:utmlostnfound/screens/admin/add_security_personnel.dart';
@@ -64,73 +64,96 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
-  // Drawer for Admin
-  Widget buildDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
+  // BottomSheet for Admin menu with improved layout and styling
+  void _showAdminMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Ensure that the BottomSheet is not too large
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16.0),
+              topRight: Radius.circular(16.0),
             ),
-            child: Text(
-              'Admin Menu',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: Offset(0, -3),
               ),
-            ),
+            ],
           ),
-          ListTile(
-            title: const Text('Admin Dashboard'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AdminDashboard()),
-              );
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildMenuItem(context, 'Admin Dashboard', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminDashboard()),
+                );
+              }),
+              _buildMenuItem(context, 'Appointments', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AppointmentScreen()),
+                );
+              }),
+              _buildMenuItem(context, 'View Users', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ViewUsersScreen()),
+                );
+              }),
+              _buildMenuItem(context, 'Add Security Personnel', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddSecurityPersonnelScreen()),
+                );
+              }),
+            ],
           ),
-          ListTile(
-            title: const Text('Approval'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ApprovalScreen()),
-              );
-            },
-          ),
-          ListTile(
-            title: const Text('View Users'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ViewUsersScreen()),
-              );
-            },
-          ),
-          ListTile(
-            title: const Text('Add Security Personnel'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddSecurityPersonnelScreen()),
-              );
-            },
-          ),
-        ],
+        );
+      },
+    );
+  }
+
+  // Helper method to create the menu items with a common style
+  Widget _buildMenuItem(BuildContext context, String title, VoidCallback onTap) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF2F4F4F), // Darker text color for better readability
+        ),
       ),
+      onTap: onTap,
+      tileColor: Colors.transparent,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(title),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black, // Set title text color to black globally
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.menu),
-        onPressed: () => scaffoldKey.currentState?.openDrawer(), // Open drawer when menu icon is pressed
+        icon: const Icon(Icons.menu, color: Colors.black),
+        onPressed: () => _showAdminMenu(context), // Open BottomSheet when menu icon is pressed
       ),
       actions: [
         PopupMenuButton<String>(
@@ -151,6 +174,11 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ];
           },
+          color: Colors.white, // Set background color of popup menu
+          elevation: 8, // Add some shadow to the menu
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       ],
       flexibleSpace: Container(

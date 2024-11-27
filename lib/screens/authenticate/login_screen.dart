@@ -124,8 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              Color(0xFFFFE6E6), // Light pink color
-              Color(0xFFDFFFD6), // Light green color
+              Color(0xFFF9E6D5), // Soft pale peach
+              Color(0xFFD5EAE8), // Light green color
             ],
           ),
         ),
@@ -187,6 +187,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         decoration: InputDecoration(
                           hintText: 'Enter your email',
+                          hintStyle: TextStyle( // Customize the hint text style here
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500], // Lighter color for the hint
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(5.0),
                           ),
@@ -205,6 +210,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: _isObscure,
                         decoration: InputDecoration(
                           hintText: 'Enter your password',
+                          hintStyle: TextStyle( // Customize the hint text style here
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500], // Lighter color for the hint
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(5.0),
                           ),

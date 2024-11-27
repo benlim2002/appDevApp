@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:utmlostnfound/screens/authenticate/login_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-Future main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  // Initialize Firebase with error handling
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    print("Error initializing Firebase: $e");
+  }
+  
   runApp(const MyApp());
 }
 
@@ -13,14 +21,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(), // Start with SplashScreen
+      theme: ThemeData(
+        // Applying Poppins font across the app globally
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme), // Poppins font globally
+        // Define AppBar theme, etc.
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.blueAccent,
+          titleTextStyle: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold), // Poppins font for AppBar title
+        ),
+      ),
+      home: const SplashScreen(), // Your home screen
     );
   }
 }
 
-// SplashScreen with delay before navigating to LoginScreen
+// SplashScreen widget with a smooth transition
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -32,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Delay of 3 seconds before navigating to the next screen
+    // Delay of 2 seconds before navigating to the Login screen
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
@@ -44,20 +61,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Displaying the logo image before the title
+            // Logo image
             Image.asset(
               'assets/logo.png', 
               width: 100,        
               height: 100,          
             ),
             const SizedBox(height: 20), 
+            // Text with Poppins font applied
             Text(
               'UTM LOST & FOUND',
-              style: TextStyle(
+              style: GoogleFonts.poppins( // Applying Poppins font
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.brown[800],

@@ -6,6 +6,7 @@ import 'package:utmlostnfound/appbar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:uuid/uuid.dart';  // Import uuid package
 
 class ReportLostItemScreen extends StatefulWidget {
   const ReportLostItemScreen({super.key});
@@ -113,7 +114,6 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,8 +126,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFFFE6E6),
-              Color(0xFFDFFFD6),
+              Color(0xFFF9E6D5), // Soft pale peach
+              Color(0xFFD5EAE8),
             ],
           ),
         ),
@@ -153,6 +153,14 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      "Item Details",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
                     // Name Field
@@ -187,6 +195,11 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
+                            hintStyle: TextStyle(
+                              fontStyle: FontStyle.normal,
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
                             suffixIcon: const Icon(Icons.calendar_today),
                           ),
                           validator: (value) {
@@ -211,6 +224,11 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
+                        ),
+                        hintStyle: TextStyle(
+                          fontStyle: FontStyle.normal,
+                          fontSize: 14,
+                          color: Colors.grey[500],
                         ),
                       ),
                     ),
@@ -253,7 +271,13 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                                     ? "${_selectedDate!.toLocal()}".split(' ')[0]
                                     : null;
 
-                                await lostItems.add({
+                                // Create a custom UUID for the ID
+                                var uuid = Uuid();
+                                String customId = uuid.v4(); // Generate a custom ID
+
+                                // Add the item with the custom ID
+                                await lostItems.doc(customId).set({
+                                  'id': customId, // Custom ID added here
                                   'name': _nameController.text,
                                   'item': _itemController.text,
                                   'contact': _contactController.text,
@@ -287,28 +311,6 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                           ),
                           child: const Text("Submit"),
                         ),
-
-                        OutlinedButton(
-                          onPressed: () {
-                            _formKey.currentState?.reset();
-                            _nameController.clear();
-                            _itemController.clear();
-                            _contactController.clear();
-                            _locationController.clear();
-                            _descriptionController.clear();
-                            setState(() {
-                              _selectedDate = null;
-                              _photoUrl = null;
-                            });
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.black),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text("Reset", style: TextStyle(color: Colors.black)),
-                        ),
                       ],
                     ),
                   ],
@@ -321,15 +323,15 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
     );
   }
 
-  Widget _buildField(String label, String hint, TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text}) {
+  // Helper function to build text fields
+  Widget _buildField(String label, String hint, TextEditingController controller, {TextInputType keyboardType = TextInputType.text}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("$label:", style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 5),
+        Text(label, style: const TextStyle(fontSize: 16)),
         TextFormField(
           controller: controller,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -337,14 +339,12 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
             ),
+            hintStyle: TextStyle(
+              fontStyle: FontStyle.normal,
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
           ),
-          keyboardType: keyboardType,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter $label.toLowerCase()';
-            }
-            return null;
-          },
         ),
         const SizedBox(height: 15),
       ],
