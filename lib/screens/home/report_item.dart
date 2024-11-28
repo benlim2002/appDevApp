@@ -118,7 +118,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
-        title: "Report Lost Item",
+        title: "Report Found Item",
       ),
       body: Container(
         decoration: const BoxDecoration(

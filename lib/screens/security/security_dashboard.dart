@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:utmlostnfound/screens/admin/admin_appbar.dart'; // Import AdminAppBar
+import 'package:utmlostnfound/screens/security/security_appbar.dart'; // Import SecurityAppBar
 import 'package:utmlostnfound/aptScreen.dart';
 
-class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+class SecurityPersonnelDashboard extends StatefulWidget {
+  const SecurityPersonnelDashboard({super.key});
 
   @override
-  _AdminDashboardState createState() => _AdminDashboardState();
+  _SecurityPersonnelDashboardState createState() =>
+      _SecurityPersonnelDashboardState();
 }
 
-class _AdminDashboardState extends State<AdminDashboard> {
+class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   int totalItems = 0;
@@ -147,8 +148,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AdminAppBar(
-        title: "Admin Dashboard",
+      appBar: SecurityAppBar(
+        title: "Security Dashboard",
         scaffoldKey: GlobalKey<ScaffoldState>(),
       ),
       body: Container(
@@ -266,7 +267,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AptScreen(itemId: item['id'], userRole: 'admin',),
+                  builder: (context) => AptScreen(itemId: item['id'], userRole: '',),
                 ),
               );
             }

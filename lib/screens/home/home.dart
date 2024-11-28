@@ -141,11 +141,11 @@ class LostAndFoundScreen extends StatelessWidget {
                             child: const Row(
                               children: [
                                 Text(
-                                  'Lost',
+                                  'Found',
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(width: 8),
-                                Icon(Icons.search),
+                                Icon(Icons.check_circle_outline),
                               ],
                             ),
                           ),
@@ -167,11 +167,11 @@ class LostAndFoundScreen extends StatelessWidget {
                             child: const Row(
                               children: [
                                 Text(
-                                  'Found',
+                                  'Lost',
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(width: 8),
-                                Icon(Icons.check_circle_outline),
+                                Icon(Icons.search),
                               ],
                             ),
                           ),

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:utmlostnfound/screens/admin/admin_dashboard.dart'; // Admin Dashboard screen
-import 'package:utmlostnfound/screens/admin/appointment.dart'; // Approval screen
 import 'package:utmlostnfound/main.dart'; // Your main app entry
-import 'package:utmlostnfound/screens/admin/view_users.dart';
-import 'package:utmlostnfound/screens/admin/add_security_personnel.dart';
 import 'package:utmlostnfound/screens/home/profile.dart';
+import 'package:utmlostnfound/screens/security/security_dashboard.dart';
+import 'package:utmlostnfound/screens/security/security_appointment.dart';
+import 'package:utmlostnfound/screens/security/security_users.dart';
 
-class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
+
+class SecurityAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const AdminAppBar({super.key, required this.title, required this.scaffoldKey});
+  const SecurityAppBar({super.key, required this.title, required this.scaffoldKey});
 
   Future<void> _handleLogout(BuildContext context) async {
     final bool? logoutConfirmed = await showDialog<bool>(
@@ -69,7 +69,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   // BottomSheet for Admin menu with improved layout and styling
-  void _showAdminMenu(BuildContext context) {
+  void _showSecurityMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Ensure that the BottomSheet is not too large
@@ -95,28 +95,22 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildMenuItem(context, 'Admin Dashboard', () {
+              _buildMenuItem(context, 'Security Dashboard', () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AdminDashboard()),
+                  MaterialPageRoute(builder: (context) => const SecurityPersonnelDashboard()),
                 );
               }),
               _buildMenuItem(context, 'Appointments', () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AppointmentScreen()),
+                  MaterialPageRoute(builder: (context) => const SecurityAppointmentScreen()),
                 );
               }),
               _buildMenuItem(context, 'View Users', () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ViewUsersScreen()),
-                );
-              }),
-              _buildMenuItem(context, 'Add Security Personnel', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddSecurityPersonnelScreen()),
+                  MaterialPageRoute(builder: (context) => const SecurityUsersScreen()),
                 );
               }),
             ],
@@ -157,7 +151,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.menu, color: Colors.black),
-        onPressed: () => _showAdminMenu(context), // Open BottomSheet when menu icon is pressed
+        onPressed: () => _showSecurityMenu(context), // Open BottomSheet when menu icon is pressed
       ),
       actions: [
         PopupMenuButton<String>(

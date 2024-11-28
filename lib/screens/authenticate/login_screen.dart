@@ -4,8 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/screens/admin/admin_dashboard.dart';
 import 'package:utmlostnfound/screens/authenticate/register_screen.dart';
 import 'package:utmlostnfound/screens/home/home.dart';
-
-import 'package:utmlostnfound/screens/security/security.dart';
+import 'package:utmlostnfound/screens/security/security_dashboard.dart';
 import 'package:utmlostnfound/services/services.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -48,12 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
           if (role == 'admin') {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => AdminDashboard()),
+              MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
           } else if (role == 'security') {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => SecurityScreen()),
+              MaterialPageRoute(builder: (context) => const SecurityPersonnelDashboard()),
             );
           } else {
             // Default to student role or general user

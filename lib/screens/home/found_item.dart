@@ -25,7 +25,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
-        title: "Found Items",
+        title: "Lost Items",
       ),
       body: Container(
         decoration: const BoxDecoration(

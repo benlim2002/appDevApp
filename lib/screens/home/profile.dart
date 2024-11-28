@@ -230,74 +230,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Change password section
                     const Text('Change Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
 
-                    const Text('Old Password'),
-                    TextField(
-                      controller: _oldPasswordController,
-                      obscureText: _isOldPasswordObscure,
-                      decoration: InputDecoration(
-                        hintText: 'Enter old password',
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(_isOldPasswordObscure ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () {
-                            setState(() {
-                              _isOldPasswordObscure = !_isOldPasswordObscure;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    const Text('New Password'),
-                    TextField(
-                      controller: _newPasswordController,
-                      obscureText: _isNewPasswordObscure,
-                      decoration: InputDecoration(
-                        hintText: 'Enter new password',
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(_isNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () {
-                            setState(() {
-                              _isNewPasswordObscure = !_isNewPasswordObscure;
-                            });
-                          },
+                    const Text('        Old Password'),
+                    // Wrap the TextField in a Center widget to center it, and use a Container to adjust its width
+                    Center(
+                      child: Container(
+                        width: 250, // Adjust this width value as needed
+                        child: TextField(
+                          controller: _oldPasswordController,
+                          obscureText: _isOldPasswordObscure,
+                          decoration: InputDecoration(
+                            hintText: 'Enter old password',
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18.0),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(_isOldPasswordObscure ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () {
+                                setState(() {
+                                  _isOldPasswordObscure = !_isOldPasswordObscure;
+                                });
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 15),
 
-                    const Text('Confirm New Password'),
-                    TextField(
-                      controller: _confirmNewPasswordController,
-                      obscureText: _isConfirmNewPasswordObscure,
-                      decoration: InputDecoration(
-                        hintText: 'Confirm new password',
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                    const Text('        New Password'),
+                    Center(
+                      child: Container(
+                        width: 250, // Adjust this width value as needed
+                        child: TextField(
+                          controller: _newPasswordController,
+                          obscureText: _isNewPasswordObscure,
+                          decoration: InputDecoration(
+                            hintText: 'Enter new password',
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18.0),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(_isNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () {
+                                setState(() {
+                                  _isNewPasswordObscure = !_isNewPasswordObscure;
+                                });
+                              },
+                            ),
+                          ),
                         ),
-                        suffixIcon: IconButton(
-                          icon: Icon(_isConfirmNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () {
-                            setState(() {
-                              _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
-                            });
-                          },
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+
+                    const Text('        Confirm New Password'),
+                    Center(
+                      child: Container(
+                        width: 250, // Adjust this width value as needed
+                        child: TextField(
+                          controller: _confirmNewPasswordController,
+                          obscureText: _isConfirmNewPasswordObscure,
+                          decoration: InputDecoration(
+                            hintText: 'Confirm new password',
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18.0),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(_isConfirmNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () {
+                                setState(() {
+                                  _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
+                                });
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -305,13 +320,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // Submit button to change password
                     Center(
-                      child: ElevatedButton(
-                        onPressed: _changePassword,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 250, 227, 222),
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                      child: SizedBox(
+                        width: 300, // Adjust width for the button
+                        child: ElevatedButton(
+                          onPressed: _changePassword,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 250, 227, 222),
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                          ),
+                          child: const Text('Change Password'),
                         ),
-                        child: const Text('Change Password'),
                       ),
                     ),
                     const SizedBox(height: 15),

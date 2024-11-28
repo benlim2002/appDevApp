@@ -44,18 +44,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
 
-    // Email and password validation
-    if (!email.endsWith("@graduate.utm.my")) {
-      _showErrorDialog("Please use an email ending with '@graduate.utm.my'.");
+    // Email validation: Check if the email ends with the appropriate UTM domains
+    if (!email.endsWith("@graduate.utm.my") && !email.endsWith("@utm.my")) {
+      _showErrorDialog("Please use a valid UTM email address (either @graduate.utm.my or @utm.my).");
       return;
     }
+
+    // Password and confirm password validation
     if (password != confirmPassword) {
       _showErrorDialog("Passwords do not match.");
       return;
     }
 
+    // Determine the role based on the email domain
+    String role = '';
+    if (email.endsWith("@graduate.utm.my")) {
+      role = 'student'; // Student role for @graduate.utm.my
+    } else if (email.endsWith("@utm.my")) {
+      role = 'staff'; // Staff role for @utm.my
+    }
+
     try {
-      // Register user with Firebase Auth
+      // Register the user with Firebase Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
       User? user = userCredential.user;
 
@@ -63,13 +73,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Send email verification
         await user.sendEmailVerification();
 
-        // Store user data in Firestore with role "student"
+        // Store user data in Firestore with the determined role
         await _firestore.collection('users').doc(user.uid).set({
           'name': name,
           'email': email,
           'phone': phone,
           'faculty': _selectedFaculty,
-          'role': 'student', // Set role to student
+          'role': role, // Store the role (student or staff)
         });
 
         // Show a dialog instructing the user to verify their email
@@ -79,6 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showErrorDialog(e.toString());
     }
   }
+
 
   void _showVerificationDialog() {
     showDialog(

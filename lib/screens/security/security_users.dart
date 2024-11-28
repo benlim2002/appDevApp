@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:utmlostnfound/screens/admin/admin_appbar.dart'; // Import AdminAppBar
+import 'package:utmlostnfound/screens/security/security_appbar.dart'; // Import SecurityAppBar
 
-class ViewUsersScreen extends StatefulWidget {
-  const ViewUsersScreen({super.key});
+class SecurityUsersScreen extends StatefulWidget {
+  const SecurityUsersScreen({super.key});
 
   @override
-  _ViewUsersScreenState createState() => _ViewUsersScreenState();
+  _SecurityUsersScreenState createState() => _SecurityUsersScreenState();
 }
 
-class _ViewUsersScreenState extends State<ViewUsersScreen> {
+class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String _selectedRole = 'Students'; // Default to 'Users'
+  String _selectedRole = 'Users'; // Default to 'Users'
   String _searchQuery = ''; // Default empty search query
   bool _isSearching = false; // Track whether the search bar is visible
-  List<String> roles = ['Students', 'Security Personnel', 'Staff']; // Options to filter by roles
-  int totalUsersCount = 0; // Variable to hold the total number of users
+  List<String> roles = ['Users', 'Security Personnel', 'Staff']; // Options to filter by roles
 
   String getFirestoreRole(String role) {
     switch (role) {
-      case 'Students':
+      case 'Users':
         return 'student'; // Map 'Users' to 'student'
       case 'Security Personnel':
         return 'security'; // Map 'Security Personnel' to 'security'
@@ -31,34 +30,11 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    // Initialize totalUsersCount
-    _fetchTotalUserCount();
-  }
-
-  // Fetch the total user count based on selected role
-  Future<void> _fetchTotalUserCount() async {
-    try {
-      final snapshot = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: getFirestoreRole(_selectedRole))
-          .get();
-
-      setState(() {
-        totalUsersCount = snapshot.docs.length;
-      });
-    } catch (e) {
-      print("Error fetching total user count: $e");
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AdminAppBar(
-        title: "View Users", // Title for the View Users screen
-        scaffoldKey: GlobalKey<ScaffoldState>(), // Pass the scaffoldKey to the AdminAppBar
+      appBar: SecurityAppBar(
+        title: "Security Users", // Title for the Security Users screen
+        scaffoldKey: GlobalKey<ScaffoldState>(), // Pass the scaffoldKey to the SecurityAppBar
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -91,9 +67,7 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _selectedRole = newValue!; // Update selected role
-                        totalUsersCount = 0; // Reset total count when role changes
                       });
-                      _fetchTotalUserCount(); // Refetch the user count
                     },
                     items: roles.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
@@ -132,17 +106,6 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Display the total user count
-              Text(
-                'Total Users: $totalUsersCount', // Show the total count
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // StreamBuilder to get the users with role and search filter
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore
