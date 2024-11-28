@@ -197,10 +197,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         hintText: 'Enter your name',
+                        hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                          borderRadius: BorderRadius.circular(12.5),
                         ),
                       ),
                     ),
@@ -210,10 +215,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _emailController,
                       decoration: InputDecoration(
                         hintText: 'Enter your UTM email',
+                        hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                          borderRadius: BorderRadius.circular(12.5),
                         ),
                       ),
                     ),
@@ -247,7 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           filled: true,
                           fillColor: Colors.grey[200],
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
+                            borderRadius: BorderRadius.circular(12.5),
                           ),
                         ),
                       ),
@@ -258,10 +268,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _phoneController,
                       decoration: InputDecoration(
                         hintText: 'Enter your phone number',
+                        hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                          borderRadius: BorderRadius.circular(12.5),
                         ),
                       ),
                     ),
@@ -272,10 +287,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _isPasswordObscure,
                       decoration: InputDecoration(
                         hintText: 'Enter your password',
+                        hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                          borderRadius: BorderRadius.circular(12.5),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(_isPasswordObscure
@@ -296,10 +316,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _isConfirmPasswordObscure,
                       decoration: InputDecoration(
                         hintText: 'Confirm your password',
+                        hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                          borderRadius: BorderRadius.circular(12.5),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(_isConfirmPasswordObscure

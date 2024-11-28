@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Correct Firestore import
 import 'package:firebase_auth/firebase_auth.dart'; // For Firebase Authentication
-import 'package:firebase_core/firebase_core.dart'; // Firebase Core for initialization
 import 'package:utmlostnfound/appbar.dart'; // Import your custom app bar
 
 class ItemDetailsScreen extends StatefulWidget {
@@ -10,6 +9,7 @@ class ItemDetailsScreen extends StatefulWidget {
   const ItemDetailsScreen({super.key, required this.item});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ItemDetailsScreenState createState() => _ItemDetailsScreenState();
 }
 
@@ -65,6 +65,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       // Check if the document exists
       if (!docSnapshot.exists) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Item not found in Firestore.")),
         );
@@ -93,11 +94,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       });
 
       // Successfully updated the status
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Item status updated to TBD and appointment recorded.")),
       );
     } catch (e) {
       // Handle any errors that occur during the update
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error updating the status: $e")),
       );

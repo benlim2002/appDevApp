@@ -222,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.grey[500],
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
+                            borderRadius: BorderRadius.circular(12.5),
                           ),
                           filled: true,
                           fillColor: Colors.grey[200],
@@ -245,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.grey[500],
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0),
+                            borderRadius: BorderRadius.circular(12.5),
                           ),
                           filled: true,
                           fillColor: Colors.grey[200],
