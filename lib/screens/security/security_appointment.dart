@@ -26,10 +26,11 @@ class _SecurityAppointmentScreenState extends State<SecurityAppointmentScreen> {
       lastDate: DateTime(2101),
     );
 
-    if (picked != null && picked != _selectedDate)
+    if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
       });
+    }
   }
 
   // Function to open time picker dialog
@@ -39,10 +40,11 @@ class _SecurityAppointmentScreenState extends State<SecurityAppointmentScreen> {
       initialTime: TimeOfDay.now(),
     );
 
-    if (picked != null && picked != _selectedTime)
+    if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
       });
+    }
   }
 
   @override
@@ -120,24 +122,24 @@ class _SecurityAppointmentScreenState extends State<SecurityAppointmentScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Set appointment date:'),
-              SizedBox(height: 10),
+              const Text('Set appointment date:'),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () => _selectDate(context),
                 child: Text(_selectedDate == null
                     ? 'Pick Date'
                     : DateFormat('yyyy-MM-dd').format(_selectedDate!)),
               ),
-              SizedBox(height: 10),
-              Text('Set appointment time:'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
+              const Text('Set appointment time:'),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () => _selectTime(context),
                 child: Text(_selectedTime == null
                     ? 'Pick Time'
                     : _selectedTime!.format(context)),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   if (_selectedDate != null && _selectedTime != null) {

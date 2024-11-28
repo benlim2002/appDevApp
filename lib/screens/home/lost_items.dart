@@ -11,7 +11,7 @@ class FoundItemScreen extends StatefulWidget {
 }
 
 class _FoundItemScreenState extends State<FoundItemScreen> {
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   // This function is called whenever the search text is changed

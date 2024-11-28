@@ -223,30 +223,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 20),
 
                     // Display profile information
-                    _buildProfileInfo('Name', _name),
-                    _buildProfileInfo('Email', _email),
-                    _buildProfileInfo('Phone', _phone),
-                    _buildProfileInfo('Faculty', _faculty),
+                    _buildProfileInfo('Name :', _name),
+                    _buildProfileInfo('Email :', _email),
+                    _buildProfileInfo('Phone :', _phone),
+                    _buildProfileInfo('Faculty :', _faculty),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 35),
 
-                    const Text('Change Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
+                    const Center( // Center the "Change Password" text
+                      child: Text(
+                        'Change Password',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
 
-                    const Text('        Old Password'),
                     // Wrap the TextField in a Center widget to center it, and use a Container to adjust its width
                     Center(
-                      child: Container(
+                      child: SizedBox(
                         width: 250, // Adjust this width value as needed
                         child: TextField(
                           controller: _oldPasswordController,
                           obscureText: _isOldPasswordObscure,
                           decoration: InputDecoration(
                             hintText: 'Enter old password',
+                            hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                             filled: true,
                             fillColor: Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.0),
+                              borderRadius: BorderRadius.circular(20.0),
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(_isOldPasswordObscure ? Icons.visibility_off : Icons.visibility),
@@ -260,21 +269,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 25),
 
-                    const Text('        New Password'),
                     Center(
-                      child: Container(
+                      child: SizedBox(
                         width: 250, // Adjust this width value as needed
                         child: TextField(
                           controller: _newPasswordController,
                           obscureText: _isNewPasswordObscure,
                           decoration: InputDecoration(
                             hintText: 'Enter new password',
+                            hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                             filled: true,
                             fillColor: Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.0),
+                              borderRadius: BorderRadius.circular(20.0),
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(_isNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
@@ -288,21 +301,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 25),
 
-                    const Text('        Confirm New Password'),
                     Center(
-                      child: Container(
+                      child: SizedBox(
                         width: 250, // Adjust this width value as needed
                         child: TextField(
                           controller: _confirmNewPasswordController,
                           obscureText: _isConfirmNewPasswordObscure,
                           decoration: InputDecoration(
                             hintText: 'Confirm new password',
+                            hintStyle: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                             filled: true,
                             fillColor: Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.0),
+                              borderRadius: BorderRadius.circular(20.0),
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(_isConfirmNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
@@ -316,7 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 25),
 
                     // Submit button to change password
                     Center(
@@ -345,14 +362,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Helper function to build profile info text fields
   Widget _buildProfileInfo(String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Center( // Center the widget horizontally
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center, // Center the row content
         children: [
           Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 15), // Add spacing between label and value
           Text(value ?? 'Not available', style: const TextStyle(fontSize: 16)),
-        ],
+          ],
+        ),
       ),
     );
   }

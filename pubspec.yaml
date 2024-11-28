@@ -30,13 +30,15 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.1
+  icons_launcher: ^3.0.0
 
-flutter_launcher_icons:
-  android: "launcher_icon"
+icons_launcher:
   image_path: "assets/icons/icon.png"
-  min_sdk_android: 30
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icons/icon.png"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true
 
 flutter:
   uses-material-design: true
@@ -47,3 +49,4 @@ flutter:
     - assets/asset2.jpg
     - assets/asset3.jpg
     - assets/home.png
+    - assets/icons/icon.png

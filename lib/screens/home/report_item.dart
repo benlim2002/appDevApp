@@ -272,7 +272,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                                     : null;
 
                                 // Create a custom UUID for the ID
-                                var uuid = Uuid();
+                                var uuid = const Uuid();
                                 String customId = uuid.v4(); // Generate a custom ID
 
                                 // Add the item with the custom ID

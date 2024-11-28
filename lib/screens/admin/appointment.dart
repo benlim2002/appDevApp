@@ -26,10 +26,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       lastDate: DateTime(2101),
     );
 
-    if (picked != null && picked != _selectedDate)
+    if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
       });
+    }
   }
 
   // Function to open time picker dialog
@@ -39,10 +40,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       initialTime: TimeOfDay.now(),
     );
 
-    if (picked != null && picked != _selectedTime)
+    if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
       });
+    }
   }
 
   @override
@@ -126,8 +128,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Set appointment date:'),
-              SizedBox(height: 10),
+              const Text('Set appointment date:'),
+              const SizedBox(height: 10),
               // Button to open date picker
               ElevatedButton(
                 onPressed: () => _selectDate(context),
@@ -135,9 +137,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                     ? 'Pick Date'
                     : DateFormat('yyyy-MM-dd').format(_selectedDate!)),
               ),
-              SizedBox(height: 10),
-              Text('Set appointment time:'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
+              const Text('Set appointment time:'),
+              const SizedBox(height: 10),
               // Button to open time picker
               ElevatedButton(
                 onPressed: () => _selectTime(context),
@@ -145,7 +147,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                     ? 'Pick Time'
                     : _selectedTime!.format(context)),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Confirm button
               ElevatedButton(
                 onPressed: () {

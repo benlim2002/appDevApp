@@ -25,7 +25,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<DocumentSnapshot> allItems = [];
   List<DocumentSnapshot> filteredItems = []; // List for filtered items
   String currentFilter = 'all'; // Default to 'all'
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
 
   @override
@@ -239,7 +239,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         children: [
           Text(title),
           Text(
-            '(${count})', // Display count inside parentheses
+            '($count)', // Display count inside parentheses
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],

@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:utmlostnfound/screens/admin/admin_appbar.dart';  // Import the AdminAppBar
 
 class AddSecurityPersonnelScreen extends StatefulWidget {
-  const AddSecurityPersonnelScreen({Key? key}) : super(key: key);
+  const AddSecurityPersonnelScreen({super.key});
 
   @override
   _AddSecurityPersonnelScreenState createState() =>
@@ -25,7 +25,7 @@ class _AddSecurityPersonnelScreenState
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _photoUrlController = TextEditingController();
-  bool _isPasswordObscure = true;
+  final bool _isPasswordObscure = true;
 
   File? _imageFile;
   String? _photoUrl;

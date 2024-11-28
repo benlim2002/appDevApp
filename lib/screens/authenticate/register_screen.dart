@@ -185,7 +185,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ? FileImage(_profileImage!)
                               : null,
                           child: _profileImage == null
-                              ? Icon(Icons.add_a_photo, size: 30)
+                              ? const Icon(Icons.add_a_photo, size: 30)
                               : null,
                         ),
                       ),

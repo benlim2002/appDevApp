@@ -79,7 +79,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.only(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(16.0),
               topRight: Radius.circular(16.0),
             ),
@@ -88,7 +88,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
                 color: Colors.black.withOpacity(0.2),
                 spreadRadius: 2,
                 blurRadius: 10,
-                offset: Offset(0, -3),
+                offset: const Offset(0, -3),
               ),
             ],
           ),

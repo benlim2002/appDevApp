@@ -135,7 +135,7 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
               // Display the total user count
               Text(
                 'Total Users: $totalUsersCount', // Show the total count
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,

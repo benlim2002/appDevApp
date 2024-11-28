@@ -6,7 +6,7 @@ class AptScreen extends StatefulWidget {
   final String itemId;
   final String userRole; // For role-based logic
 
-  const AptScreen({Key? key, required this.itemId, required this.userRole}) : super(key: key);
+  const AptScreen({super.key, required this.itemId, required this.userRole});
 
   @override
   _AptScreenState createState() => _AptScreenState();
