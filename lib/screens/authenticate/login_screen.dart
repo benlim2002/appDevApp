@@ -21,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isObscure = true;
   String? _errorMessage;
+  String? _successMessage;
 
   Future<void> _signIn() async {
     try {
@@ -114,6 +115,35 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Method to handle Forgot Password functionality
+  Future<void> _forgotPassword() async {
+    String email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() {
+        _errorMessage = "Please enter your email address.";
+      });
+      return;
+    }
+
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      setState(() {
+        _successMessage = "Password reset link has been sent to your email.";
+        _errorMessage = null;
+      });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = _getFriendlyErrorMessage(e.code);
+        _successMessage = null;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = "An error occurred while sending reset email. Please try again.";
+        _successMessage = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,10 +216,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         decoration: InputDecoration(
                           hintText: 'Enter your email',
-                          hintStyle: TextStyle( // Customize the hint text style here
+                          hintStyle: TextStyle(
                             fontStyle: FontStyle.normal,
                             fontSize: 14,
-                            color: Colors.grey[500], // Lighter color for the hint
+                            color: Colors.grey[500],
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(5.0),
@@ -209,10 +239,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: _isObscure,
                         decoration: InputDecoration(
                           hintText: 'Enter your password',
-                          hintStyle: TextStyle( // Customize the hint text style here
+                          hintStyle: TextStyle(
                             fontStyle: FontStyle.normal,
                             fontSize: 14,
-                            color: Colors.grey[500], // Lighter color for the hint
+                            color: Colors.grey[500],
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(5.0),
@@ -257,6 +287,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                      if (_successMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.greenAccent),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle, color: Colors.greenAccent),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _successMessage!,
+                                    style: const TextStyle(color: Colors.greenAccent),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -291,7 +345,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: ElevatedButton(
                           onPressed: _signInAnonymously,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400], // Set a different color if desired
+                            backgroundColor: Colors.grey[400],
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                           ),
                           child: const Text('Sign in as Guest'),
@@ -301,9 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 15),
                       Center(
                         child: TextButton(
-                          onPressed: () {
-                            // Forgot Password action
-                          },
+                          onPressed: _forgotPassword, // Forgot Password action
                           child: const Text(
                             'Forget Password?',
                             style: TextStyle(color: Colors.black54),

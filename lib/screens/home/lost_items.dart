@@ -47,11 +47,11 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: "Search Found Items",
-                  hintStyle: TextStyle( // Customize the hint text style here
+                  hintText: "Search Lost Items", // Change to "Lost" instead of "Found"
+                  hintStyle: TextStyle(
                     fontStyle: FontStyle.normal,
                     fontSize: 14,
-                    color: Colors.grey[500], // Lighter color for the hint
+                    color: Colors.grey[500],
                   ),
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
@@ -68,6 +68,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('lost_items') // Use your correct collection
+                    .where('status', isEqualTo: 'lost') // Filter for 'lost' status
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -76,12 +77,12 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Center(
-                      child: Text("No found items available."),
+                      child: Text("No lost items available."),
                     );
                   }
 
-                  // Filter the found items based on the search query
-                  final foundItems = snapshot.data!.docs.where((item) {
+                  // Filter the lost items based on the search query
+                  final lostItems = snapshot.data!.docs.where((item) {
                     final data = item.data() as Map<String, dynamic>;
                     final itemName = data['item']?.toLowerCase() ?? '';
                     final itemLocation = data['location']?.toLowerCase() ?? '';
@@ -93,9 +94,9 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                   }).toList();
 
                   return ListView.builder(
-                    itemCount: foundItems.length,
+                    itemCount: lostItems.length,
                     itemBuilder: (context, index) {
-                      final item = foundItems[index];
+                      final item = lostItems[index];
                       final data = item.data() as Map<String, dynamic>;
 
                       return Card(
