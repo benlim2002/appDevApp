@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:utmlostnfound/screens/admin/admin_appbar.dart'; // Import AdminAppBar
 
 class ViewUsersScreen extends StatefulWidget {
@@ -195,27 +196,22 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
       child: ListTile(
         title: Text(user['name'] ?? 'Unknown User'),
         subtitle: Text(user['role'] ?? 'No role assigned'),
-        leading: user['photo_url'] != null && user['photo_url'].isNotEmpty
+        leading: user['profileImage'] != null && user['profileImage'].isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  user['photo_url'],
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.broken_image,
-                      size: 50,
-                      color: Colors.grey,
-                    );
-                  },
+                child: CachedNetworkImage(
+                  imageUrl: user['profileImage'],
+                  width: 50,  // Set the width limit for the image
+                  height: 50, // Set the height limit for the image
+                  fit: BoxFit.cover,  // Ensure image maintains aspect ratio
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),  // Placeholder while image is loading
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.broken_image,
+                    size: 50,
+                    color: Colors.grey,
+                  ),  // Error widget if the image fails to load
                 ),
               )
             : const Icon(Icons.person),
