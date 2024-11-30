@@ -2,9 +2,10 @@ import 'dart:io'; // For File handling when picking image
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:utmlostnfound/screens/home/home.dart';  // Import the HomeScreen
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart'; // For picking images
-import 'package:firebase_storage/firebase_storage.dart'; // For uploading images to Firebase
+import 'dart:convert'; 
+import 'package:utmlostnfound/screens/home/home.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,7 +17,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   User? _user;
   String? _name;
@@ -25,7 +25,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _faculty;
   String? _profilePicUrl;
 
-  // Controllers for password change
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmNewPasswordController = TextEditingController();
@@ -43,7 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  // Load user data from Firestore and Firebase Storage
+  // Load user data from Firestore
   Future<void> _loadUserData() async {
     if (_user != null) {
       final userDoc = await _firestore.collection('users').doc(_user!.uid).get();
@@ -53,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _email = data?['email'];
         _phone = data?['phone'];
         _faculty = data?['faculty'];
-        _profilePicUrl = data?['profilePicUrl']; // Load profile pic URL
+        _profilePicUrl = data?['profileImage'];
       });
     }
   }
@@ -70,14 +69,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      // Re-authenticate the user
       final cred = EmailAuthProvider.credential(
         email: _user!.email!,
         password: oldPassword,
       );
       await _user!.reauthenticateWithCredential(cred);
-
-      // Update password
       await _user!.updatePassword(newPassword);
       _showSuccessDialog("Password updated successfully.");
     } catch (e) {
@@ -85,41 +81,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Method to pick a new profile picture
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-      // Upload the new profile picture to Firebase Storage
-      _uploadProfilePic();
-    }
-  }
 
-  // Upload profile picture to Firebase Storage
-  Future<void> _uploadProfilePic() async {
-    if (_image != null) {
-      try {
-        final fileName = '${_user!.uid}_profile_pic.jpg';
-        final ref = _storage.ref().child('profile_pictures').child(fileName);
-        await ref.putFile(_image!);
-        final downloadUrl = await ref.getDownloadURL();
+  // Method to pick and upload image to Cloudinary
+Future<void> _pickImage() async {
+  final pickedFile = await _picker.pickImage(source: ImageSource.gallery); // Allow picking from gallery
+  if (pickedFile != null) {
+    File file = File(pickedFile.path); // Convert to File
+
+    try {
+      // Cloudinary credentials
+      const cloudName = "dqqb4c714";  // Replace with your Cloudinary cloud name
+      const uploadPreset = "pics_upload";  // Replace with your Cloudinary upload preset
+
+      // Cloudinary API endpoint for image upload
+      final uri = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+
+      var request = http.MultipartRequest('POST', uri);
+      request.fields['upload_preset'] = uploadPreset;
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      // Send request to Cloudinary
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        final jsonResponse = json.decode(responseData);
+
+        setState(() {
+          _profilePicUrl = jsonResponse['secure_url']; // Update with Cloudinary URL
+        });
 
         // Update Firestore with the new profile picture URL
         await _firestore.collection('users').doc(_user!.uid).update({
-          'profilePicUrl': downloadUrl,
+          'profileImage': _profilePicUrl, // Update Firestore document
         });
 
-        setState(() {
-          _profilePicUrl = downloadUrl;
-        });
-
-      } catch (e) {
-        _showErrorDialog("Error uploading profile picture: ${e.toString()}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo uploaded successfully!')),
+        );
+      } else {
+        throw Exception('Failed to upload photo to Cloudinary');
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload photo: $e')),
+      );
     }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No photo selected!')),
+    );
   }
+}
+
 
   // Show error dialog
   void _showErrorDialog(String message) {
@@ -138,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Show success dialog and navigate to HomeScreen
+  // Show success dialog
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -148,10 +161,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close the dialog
+              Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LostAndFoundScreen()), // Navigate to HomeScreen
+                MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
               );
             },
             child: const Text("OK"),
@@ -170,8 +183,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              Color(0xFFF9E6D5), // Soft pale peach
-              Color(0xFFD5EAE8), // Light green color
+              Color(0xFFF9E6D5), 
+              Color(0xFFD5EAE8),
             ],
           ),
         ),
@@ -220,125 +233,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 25),
 
                     // Display profile information
-                    _buildProfileInfo('Name :', _name),
-                    _buildProfileInfo('Email :', _email),
-                    _buildProfileInfo('Phone :', _phone),
-                    _buildProfileInfo('Faculty :', _faculty),
+                    _buildProfileInfo('Name: ', _name),
+                    _buildProfileInfo('Email: ', _email),
+                    _buildProfileInfo('Phone: ', _phone),
+                    _buildProfileInfo('Faculty: ', _faculty),
 
                     const SizedBox(height: 35),
 
-                    const Center( // Center the "Change Password" text
+                    const Center( 
                       child: Text(
                         'Change Password',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 20),
 
-                    // Wrap the TextField in a Center widget to center it, and use a Container to adjust its width
-                    Center(
-                      child: SizedBox(
-                        width: 250, // Adjust this width value as needed
-                        child: TextField(
-                          controller: _oldPasswordController,
-                          obscureText: _isOldPasswordObscure,
-                          decoration: InputDecoration(
-                            hintText: 'Enter old password',
-                            hintStyle: TextStyle(
-                            fontStyle: FontStyle.normal,
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(_isOldPasswordObscure ? Icons.visibility_off : Icons.visibility),
-                              onPressed: () {
-                                setState(() {
-                                  _isOldPasswordObscure = !_isOldPasswordObscure;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
+                    // Password change section
+                    _buildPasswordTextField('Enter old password', _oldPasswordController, _isOldPasswordObscure),
+                    _buildPasswordTextField('Enter new password', _newPasswordController, _isNewPasswordObscure),
+                    _buildPasswordTextField('Confirm new password', _confirmNewPasswordController, _isConfirmNewPasswordObscure),
 
-                    Center(
-                      child: SizedBox(
-                        width: 250, // Adjust this width value as needed
-                        child: TextField(
-                          controller: _newPasswordController,
-                          obscureText: _isNewPasswordObscure,
-                          decoration: InputDecoration(
-                            hintText: 'Enter new password',
-                            hintStyle: TextStyle(
-                            fontStyle: FontStyle.normal,
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(_isNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
-                              onPressed: () {
-                                setState(() {
-                                  _isNewPasswordObscure = !_isNewPasswordObscure;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    Center(
-                      child: SizedBox(
-                        width: 250, // Adjust this width value as needed
-                        child: TextField(
-                          controller: _confirmNewPasswordController,
-                          obscureText: _isConfirmNewPasswordObscure,
-                          decoration: InputDecoration(
-                            hintText: 'Confirm new password',
-                            hintStyle: TextStyle(
-                            fontStyle: FontStyle.normal,
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(_isConfirmNewPasswordObscure ? Icons.visibility_off : Icons.visibility),
-                              onPressed: () {
-                                setState(() {
-                                  _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 25),
 
                     // Submit button to change password
                     Center(
                       child: SizedBox(
-                        width: 300, // Adjust width for the button
+                        width: 300, 
                         child: ElevatedButton(
                           onPressed: _changePassword,
                           style: ElevatedButton.styleFrom(
@@ -360,18 +283,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Helper function to build profile info text fields
   Widget _buildProfileInfo(String label, String? value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Center( // Center the widget horizontally
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center, // Center the row content
-        children: [
-          Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(width: 15), // Add spacing between label and value
-          Text(value ?? 'Not available', style: const TextStyle(fontSize: 16)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            Text(value ?? 'N/A', style: const TextStyle(fontSize: 15)),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordTextField(
+      String label, TextEditingController controller, bool isObscure) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextField(
+        controller: controller,
+        obscureText: isObscure,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+          suffixIcon: IconButton(
+            icon: Icon(
+              isObscure ? Icons.visibility_off : Icons.visibility,
+            ),
+            onPressed: () {
+              setState(() {
+                isObscure = !isObscure;
+              });
+            },
+          ),
         ),
       ),
     );

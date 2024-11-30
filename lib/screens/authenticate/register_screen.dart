@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,72 +25,112 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordObscure = true;
   bool _isConfirmPasswordObscure = true;
   String? _selectedFaculty;
-  File? _profileImage;  // Variable to hold the selected image
+  File? _profileImage;
+  String? _photoUrl;
+  
+
 
   // Method to pick an image from the gallery
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery); // You can use camera or gallery
 
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _registerUser() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-    final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
-
-    // Email validation: Check if the email ends with the appropriate UTM domains
-    if (!email.endsWith("@graduate.utm.my") && !email.endsWith("@utm.my")) {
-      _showErrorDialog("Please use a valid UTM email address (either @graduate.utm.my or @utm.my).");
-      return;
-    }
-
-    // Password and confirm password validation
-    if (password != confirmPassword) {
-      _showErrorDialog("Passwords do not match.");
-      return;
-    }
-
-    // Determine the role based on the email domain
-    String role = '';
-    if (email.endsWith("@graduate.utm.my")) {
-      role = 'student'; // Student role for @graduate.utm.my
-    } else if (email.endsWith("@utm.my")) {
-      role = 'staff'; // Staff role for @utm.my
-    }
+  if (pickedFile != null) {
+    File file = File(pickedFile.path);
 
     try {
-      // Register the user with Firebase Auth
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      User? user = userCredential.user;
+      // Cloudinary credentials
+      const cloudName = "dqqb4c714";  // your Cloudinary cloud name
+      const uploadPreset = "pics_upload";  // your Cloudinary upload preset
 
-      if (user != null) {
-        // Send email verification
-        await user.sendEmailVerification();
+      final uri = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
 
-        // Store user data in Firestore with the determined role
-        await _firestore.collection('users').doc(user.uid).set({
-          'name': name,
-          'email': email,
-          'phone': phone,
-          'faculty': _selectedFaculty,
-          'role': role, // Store the role (student or staff)
+      var request = http.MultipartRequest('POST', uri);
+      request.fields['upload_preset'] = uploadPreset;
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        final jsonResponse = json.decode(responseData);
+
+        setState(() {
+          _photoUrl = jsonResponse['secure_url']; // save the Cloudinary URL
         });
 
-        // Show a dialog instructing the user to verify their email
-        _showVerificationDialog();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo uploaded successfully!')),
+        );
+      } else {
+        throw Exception('Failed to upload photo to Cloudinary');
       }
     } catch (e) {
-      _showErrorDialog(e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload photo: $e')),
+      );
     }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No photo selected!')),
+    );
   }
+}
+
+
+  Future<void> _registerUser() async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text;
+  final confirmPassword = _confirmPasswordController.text;
+  final name = _nameController.text.trim();
+  final phone = _phoneController.text.trim();
+
+  // Email validation: Check if the email ends with the appropriate UTM domains
+  if (!email.endsWith("@graduate.utm.my") && !email.endsWith("@utm.my")) {
+    _showErrorDialog("Please use a valid UTM email address (either @graduate.utm.my or @utm.my).");
+    return;
+  }
+
+  // Password and confirm password validation
+  if (password != confirmPassword) {
+    _showErrorDialog("Passwords do not match.");
+    return;
+  }
+
+  // Determine the role based on the email domain
+  String role = '';
+  if (email.endsWith("@graduate.utm.my")) {
+    role = 'student'; // Student role for @graduate.utm.my
+  } else if (email.endsWith("@utm.my")) {
+    role = 'staff'; // Staff role for @utm.my
+  }
+
+  try {
+    // Register the user with Firebase Auth
+    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    User? user = userCredential.user;
+
+    if (user != null) {
+      // Send email verification
+      await user.sendEmailVerification();
+
+      // Store user data in Firestore with the determined role
+      await _firestore.collection('users').doc(user.uid).set({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'faculty': _selectedFaculty,
+        'role': role, // Store the role (student or staff)
+        'profileImage': _photoUrl, // Store the Cloudinary URL
+      });
+
+      // Show a dialog instructing the user to verify their email
+      _showVerificationDialog();
+    }
+  } catch (e) {
+    _showErrorDialog(e.toString());
+  }
+}
+
 
 
   void _showVerificationDialog() {
