@@ -96,7 +96,7 @@ class _AddSecurityPersonnelScreenState
         await _firestore.collection('users').doc(user.uid).set({
           'name': name,
           'email': email,
-          'photo_url': photoUrl,
+          'profileImage': photoUrl,
           'role': 'security', 
           'created_at': FieldValue.serverTimestamp(),
         });

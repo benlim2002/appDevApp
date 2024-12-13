@@ -225,9 +225,9 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
       onPressed: () {
         setState(() {
           currentFilter = filterType;
-          allItems.clear();  // Clear the previous list before loading the new items
-          filteredItems.clear(); // Clear filtered items as well
-          lastDocument = null;  // Reset pagination
+          allItems.clear(); 
+          filteredItems.clear();
+          lastDocument = null; 
         });
         _loadMoreItems(); // Reload the items based on the selected filter
       },

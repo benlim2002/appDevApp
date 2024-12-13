@@ -3,6 +3,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:utmlostnfound/appbar.dart';
 import 'package:utmlostnfound/screens/home/item_details.dart';
 
+
+
+String calculatePostAge(String postDate) {
+  try {
+    final postDateTime = DateTime.parse(postDate); // Parse the date string
+    final now = DateTime.now();
+    final difference = now.difference(postDateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day(s) ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour(s) ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute(s) ago';
+    } else {
+      return 'Just now';
+    }
+  } catch (e) {
+    return 'Unknown time';
+  }
+}
 class FoundItemScreen extends StatefulWidget {
   const FoundItemScreen({super.key});
 
@@ -135,7 +156,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                                         ),
                                       ),
                                       Text(
-                                        data['date'] ?? '',
+                                        calculatePostAge(data['date'] ?? ''),
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.black54,
@@ -145,6 +166,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                                   ),
                                 ],
                               ),
+
                               const SizedBox(height: 10),
 
                               // Item image placeholder or actual image

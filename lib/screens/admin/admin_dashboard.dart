@@ -259,7 +259,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildListItem(Map<String, dynamic> item) {
+  Widget _buildListItem(Map<String, dynamic> item) { //For now only status can click
     return GestureDetector(
       onTap: item['status'] == 'approved'
           ? () {
