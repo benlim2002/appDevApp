@@ -24,10 +24,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _phone;
   String? _faculty;
   String? _profilePicUrl;
+  String? _selectedFaculty;
 
+
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _facultyController = TextEditingController();
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmNewPasswordController = TextEditingController();
+
   bool _isOldPasswordObscure = true;
   bool _isNewPasswordObscure = true;
   bool _isConfirmNewPasswordObscure = true;
@@ -51,9 +58,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _name = data?['name'];
         _email = data?['email'];
         _phone = data?['phone'];
-        _faculty = data?['faculty'];
+        _selectedFaculty = data?['faculty'];
         _profilePicUrl = data?['profileImage'];
+        _nameController.text = _name ?? '';
+        _phoneController.text = _phone ?? '';
+        _facultyController.text = _faculty ?? ''; //check here
       });
+    }
+  }
+
+  // Update profile information
+  Future<void> _updateProfile() async {
+    try {
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'name': _nameController.text,
+        'phone': _phoneController.text,
+        'faculty': _selectedFaculty,
+      });
+
+      setState(() {
+        _name = _nameController.text;
+        _phone = _phoneController.text;
+        _faculty = _selectedFaculty;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile: $e')),
+      );
     }
   }
 
@@ -235,13 +270,33 @@ Future<void> _pickImage() async {
                     ),
                     const SizedBox(height: 25),
 
-                    // Display profile information
-                    _buildProfileInfo('Name: ', _name),
-                    _buildProfileInfo('Email: ', _email),
-                    _buildProfileInfo('Phone: ', _phone),
-                    _buildProfileInfo('Faculty: ', _faculty),
+                    // Non-editable Email Field
+                    if (_email != null)
+                      _buildNonEditableField('Email', _email!),
+
+                    // Editable profile fields
+                    _buildEditableTextField('Name', _nameController),
+                    _buildEditableTextField('Phone', _phoneController),
+                    _buildFacultyDropdown(),
 
                     const SizedBox(height: 35),
+
+                    // Update Profile button
+                    Center(
+                      child: SizedBox(
+                        width: 300,
+                        child: ElevatedButton(
+                          onPressed: _updateProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD5EAE8),
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                          ),
+                          child: const Text('Update Profile'),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
 
                     const Center( 
                       child: Text(
@@ -283,20 +338,72 @@ Future<void> _pickImage() async {
     );
   }
 
-  Widget _buildProfileInfo(String label, String? value) {
+ Widget _buildNonEditableField(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            Text(value ?? 'N/A', style: const TextStyle(fontSize: 15)),
-          ],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          Text(value, style: const TextStyle(fontSize: 15)),
+        ],
+      ),
+    );
+  }
+ Widget _buildEditableTextField(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
         ),
       ),
     );
   }
+Widget _buildFacultyDropdown() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Faculty', style: TextStyle(fontSize: 13)),
+        DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: _selectedFaculty,
+          items: [
+            'Faculty of Computing',
+            'Faculty of Civil Engineering',
+            'Faculty of Mechanical Engineering',
+            'Faculty of Electrical Engineering',
+            'Faculty of Chemical and Energy Engineering',
+            'Faculty of Science',
+            'Faculty of Built Environment and Surveying',
+            'Faculty of Management',
+            'Faculty of Social Sciences and Humanities'
+          ].map((faculty) => DropdownMenuItem(
+                value: faculty,
+                child: Text(faculty),
+              )).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedFaculty = value;
+            });
+          },
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color.fromARGB(255, 253, 253, 253),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildPasswordTextField(
       String label, TextEditingController controller, bool isObscure) {
@@ -314,7 +421,13 @@ Future<void> _pickImage() async {
             ),
             onPressed: () {
               setState(() {
-                isObscure = !isObscure;
+                if (label == 'Enter old password') {
+                  _isOldPasswordObscure = !_isOldPasswordObscure;
+                } else if (label == 'Enter new password') {
+                  _isNewPasswordObscure = !_isNewPasswordObscure;
+                } else {
+                  _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
+                }
               });
             },
           ),
