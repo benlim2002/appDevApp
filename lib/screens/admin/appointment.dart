@@ -67,7 +67,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         ),
         child: FutureBuilder<QuerySnapshot>(
           // Query only items with "TBD" status
-          future: _firestore.collection('lost_items').where('status', isEqualTo: 'TBD').get(),
+          future: _firestore.collection('items').where('postType', isEqualTo: 'TBD').get(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -164,7 +164,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                     // Update the Firestore document with the appointment date and time, and status to approved
                     item.reference.update({
                       'aptDate': appointmentDateTime,
-                      'status': 'approved', // Change the status to "approved"
+                      'postType': 'approved', // Change the status to "approved"
                     }).then((_) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Appointment confirmed successfully')),

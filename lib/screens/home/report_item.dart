@@ -251,19 +251,19 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                       "(Brand, Size, Colour, etc)",
                        style: TextStyle(fontSize: 12, color: Colors.grey),
                        ),
-TextFormField(
-  controller: _descriptionController,
-  maxLines: 3,
-  decoration: InputDecoration(
-    hintText: "Enter description",
-    filled: true,
-    fillColor: Colors.grey[100],
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
-  ),
-),
+                        TextFormField(
+                          controller: _descriptionController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: "Enter description",
+                            filled: true,
+                            fillColor: Colors.grey[100],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                          ),
+                        ),
 
 
                     // Upload Photo
@@ -294,6 +294,7 @@ TextFormField(
                                 String customId = uuid.v4();
 
                                 await lostItems.doc(customId).set({
+                                  'id': customId,
                                   'name': _nameController.text,
                                   'item': _itemController.text,
                                   'contact': _contactController.text,
@@ -302,7 +303,6 @@ TextFormField(
                                   'postType': _postType,
                                   'date': formattedDate,
                                   'photoUrl': _photoUrl,
-                                  'userId': _userId,
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
 

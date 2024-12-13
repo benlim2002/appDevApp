@@ -58,7 +58,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   Future<void> _updateStatusToTBD() async {
     try {
       // Ensure the document reference exists
-      DocumentReference itemRef = FirebaseFirestore.instance.collection('lost_items').doc(item['id']);
+      DocumentReference itemRef = FirebaseFirestore.instance.collection('items').doc(item['id']);
 
       // Get the document snapshot
       DocumentSnapshot docSnapshot = await itemRef.get();
@@ -88,7 +88,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       // Proceed to update the document's status to "TBD" and add who made the appointment
       await itemRef.update({
-        'status': 'TBD', // Update the status field
+        'postType': 'TBD', // Update the status field
         'aptMadeBy': aptMadeBy, // Store the user/guest name
         'userPhone': aptMadeBy == "Guest" ? null : userPhone, // Store phone number if user
       });

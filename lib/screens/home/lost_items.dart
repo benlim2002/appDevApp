@@ -88,8 +88,8 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('lost_items') // Use your correct collection
-                    .where('status', isEqualTo: 'lost') // Filter for 'lost' status
+                    .collection('items') // Use your correct collection
+                    .where('postType', isEqualTo: 'Found') // Filter for 'lost' status
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {

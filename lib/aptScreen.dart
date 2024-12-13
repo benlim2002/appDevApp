@@ -56,7 +56,7 @@ class _AptScreenState extends State<AptScreen> {
       await FirebaseFirestore.instance
           .collection('lost_items')
           .doc(widget.itemId)
-          .update({'status': 'found'});
+          .update({'status': 'Found'});
 
       // Show a success message
       ScaffoldMessenger.of(context).showSnackBar(

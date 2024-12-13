@@ -36,21 +36,21 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     _loadMoreItems();  // Load the first batch of items immediately
   }
 
-  // Load metrics like total, found, lost, and approved items
+  // Load metrics like total, Found, lost, and approved items
   Future<void> _loadDashboardMetrics() async {
     try {
-      final totalSnapshot = await _firestore.collection('lost_items').get();
+      final totalSnapshot = await _firestore.collection('items').get();
       final foundSnapshot = await _firestore
-          .collection('lost_items')
-          .where('status', isEqualTo: 'found')
+          .collection('items')
+          .where('postType', isEqualTo: 'Found')
           .get();
       final lostSnapshot = await _firestore
-          .collection('lost_items')
-          .where('status', isEqualTo: 'lost')
+          .collection('items')
+          .where('postType', isEqualTo: 'lost')
           .get();
       final approvedSnapshot = await _firestore
-          .collection('lost_items')
-          .where('status', isEqualTo: 'approved')
+          .collection('items')
+          .where('postType', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -71,7 +71,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     }
   }
 
-  // Fetch paginated data based on the current filter (found, lost, all, or approved)
+  // Fetch paginated data based on the current filter (Found, lost, all, or approved)
   Future<void> _loadMoreItems() async {
     if (isPaginating) return; // Prevent multiple calls at once
 
@@ -85,14 +85,14 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     if (lastDocument == null) {
       if (filterStatus == 'all') {
         querySnapshot = await _firestore
-            .collection('lost_items')
+            .collection('items')
             .orderBy('date', descending: true)
             .limit(20)
             .get();
       } else {
         querySnapshot = await _firestore
-            .collection('lost_items')
-            .where('status', isEqualTo: filterStatus)
+            .collection('items')
+            .where('postType', isEqualTo: filterStatus)
             .orderBy('date', descending: true)
             .limit(20)
             .get();
@@ -100,15 +100,15 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     } else {
       if (filterStatus == 'all') {
         querySnapshot = await _firestore
-            .collection('lost_items')
+            .collection('items')
             .orderBy('date', descending: true)
             .startAfterDocument(lastDocument!)
             .limit(20)
             .get();
       } else {
         querySnapshot = await _firestore
-            .collection('lost_items')
-            .where('status', isEqualTo: filterStatus)
+            .collection('items')
+            .where('postType', isEqualTo: filterStatus)
             .orderBy('date', descending: true)
             .startAfterDocument(lastDocument!)
             .limit(20)
@@ -180,7 +180,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
                       const SizedBox(width: 16),
                       _buildFilterButton("Approved", 'approved', itemsApproved),
                       const SizedBox(width: 16),
-                      _buildFilterButton("Found", 'found', itemsFound),
+                      _buildFilterButton("Found", 'Found', itemsFound),
                       const SizedBox(width: 16),
                       _buildFilterButton("Lost", 'lost', itemsLost),
                     ],
@@ -262,7 +262,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
 
   Widget _buildListItem(Map<String, dynamic> item) {
     return GestureDetector(
-      onTap: item['status'] == 'approved'
+      onTap: item['postType'] == 'approved'
           ? () {
               Navigator.push(
                 context,
@@ -297,7 +297,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
             fontWeight: FontWeight.bold, // Makes the text bold
           ),),  // Change here to use item name
           subtitle: Text(
-            'Status: ${item['status']}\nDescription: ${item['description'] ?? "No description"}',
+            'Status: ${item['postType']}\nDescription: ${item['description'] ?? "No description"}',
           ),
           isThreeLine: true,
         ),
