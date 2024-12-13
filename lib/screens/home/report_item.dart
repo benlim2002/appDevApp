@@ -6,7 +6,7 @@ import 'package:utmlostnfound/appbar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:uuid/uuid.dart';  // Import uuid package
+import 'package:uuid/uuid.dart'; // Import uuid package
 
 class ReportLostItemScreen extends StatefulWidget {
   const ReportLostItemScreen({super.key});
@@ -23,6 +23,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
   DateTime? _selectedDate;
+  String? _postType = 'Lost'; // Default value for Post Type
 
   File? _imageFile;
   String? _photoUrl;
@@ -118,7 +119,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
-        title: "Report Found Item",
+        title: "Report Item",
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -163,25 +164,58 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Name Field
+                    // Post Type (Lost or Found)
+                    const Text("Post Type", style: TextStyle(fontSize: 16)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _postType = 'Lost';
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _postType == 'Lost'
+                                  ? const Color.fromARGB(255, 75, 247, 144)
+                                  : Colors.grey[300],
+                              foregroundColor: Colors.black,
+                            ),
+                            child: const Text("Lost"),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _postType = 'Found';
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _postType == 'Found'
+                                  ? const Color.fromARGB(255, 75, 247, 144)
+                                  : Colors.grey[300],
+                              foregroundColor: Colors.black,
+                            ),
+                            child: const Text("Found"),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+
+                    // Other Input Fields
                     _buildField("Name", "Enter your name", _nameController),
-
-                    // Item Field
                     _buildField("Item", "Enter item name", _itemController),
-
-                    // Contact Field
                     _buildField(
                       "Contact",
                       "+60",
                       _contactController,
                       keyboardType: TextInputType.phone,
                     ),
-
-                    // Location Field
                     _buildField("Location", "Enter location", _locationController),
-
-                    // Date Field
-                    const Text("Date:", style: TextStyle(fontSize: 16)),
+                    const Text("Date", style: TextStyle(fontSize: 16)),
                     GestureDetector(
                       onTap: () => _selectDate(context),
                       child: AbsorbPointer(
@@ -195,11 +229,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            hintStyle: TextStyle(
-                              fontStyle: FontStyle.normal,
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
+                            hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
                             suffixIcon: const Icon(Icons.calendar_today),
                           ),
                           validator: (value) {
@@ -214,44 +244,34 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                     const SizedBox(height: 15),
 
                     // Description Field
-                    const Text("Description:", style: TextStyle(fontSize: 16)),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: "Enter description",
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        hintStyle: TextStyle(
-                          fontStyle: FontStyle.normal,
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    // Description Field
+                   const Text("Brief Description", style: TextStyle(fontSize: 16)),
+                   const SizedBox(height: 5),
+                   const Text(
+                      "(Brand, Size, Colour, etc)",
+                       style: TextStyle(fontSize: 12, color: Colors.grey),
+                       ),
+TextFormField(
+  controller: _descriptionController,
+  maxLines: 3,
+  decoration: InputDecoration(
+    hintText: "Enter description",
+    filled: true,
+    fillColor: Colors.grey[100],
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
+  ),
+),
+
 
                     // Upload Photo
-                    const Text("Upload Photo:", style: TextStyle(fontSize: 16)),
-                    const Text(
-                      "(Upload if available)",
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 10),
+                    const Text("Upload Photo", style: TextStyle(fontSize: 16)),
                     ElevatedButton.icon(
                       onPressed: _uploadPhoto,
                       icon: const Icon(Icons.upload_file),
                       label: const Text("Upload Photo"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 30),
 
@@ -263,53 +283,65 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               CollectionReference lostItems =
-                                  FirebaseFirestore.instance.collection('lost_items');
+                                  FirebaseFirestore.instance.collection('items');
 
                               try {
-                                // Format the selected date to 'YYYY-MM-DD' format
                                 final formattedDate = _selectedDate != null
                                     ? "${_selectedDate!.toLocal()}".split(' ')[0]
                                     : null;
 
-                                // Create a custom UUID for the ID
                                 var uuid = const Uuid();
-                                String customId = uuid.v4(); // Generate a custom ID
+                                String customId = uuid.v4();
 
-                                // Add the item with the custom ID
                                 await lostItems.doc(customId).set({
-                                  'id': customId, // Custom ID added here
                                   'name': _nameController.text,
                                   'item': _itemController.text,
                                   'contact': _contactController.text,
                                   'location': _locationController.text,
-                                  'date': formattedDate, // Save only the formatted date
                                   'description': _descriptionController.text,
-                                  'photo_url': _photoUrl,
-                                  'timestamp': DateTime.now().millisecondsSinceEpoch,
-                                  'status': 'lost',
+                                  'postType': _postType,
+                                  'date': formattedDate,
+                                  'photoUrl': _photoUrl,
+                                  'userId': _userId,
+                                  'createdAt': FieldValue.serverTimestamp(),
                                 });
 
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Item reported successfully!')),
                                 );
 
-                                Navigator.pop(context); // Navigate back to the main page
+                                Navigator.pop(context);
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to report item: $e')),
+                                  SnackBar(content: Text('Error: $e')),
                                 );
                               }
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            backgroundColor: Colors.blue, // Background color for Submit button
+                            foregroundColor: Colors.white, // Text color for Submit button
                           ),
-                          child: const Text("Submit"),
+                          child: const Text('Submit'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            _nameController.clear();
+                            _itemController.clear();
+                            _contactController.clear();
+                            _locationController.clear();
+                            _descriptionController.clear();
+                            setState(() {
+                              _postType = 'Lost';
+                              _selectedDate = null;
+                              _photoUrl = null;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red, // Background color for Reset button
+                            foregroundColor: Colors.white, // Text color for Reset button
+                          ),
+                          child: const Text('Reset'),
                         ),
                       ],
                     ),
@@ -323,31 +355,36 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
     );
   }
 
-  // Helper function to build text fields
-  Widget _buildField(String label, String hint, TextEditingController controller, {TextInputType keyboardType = TextInputType.text}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+  Widget _buildField(String label, String hint, TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: hint,
+              filled: true,
+              fillColor: Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
-            hintStyle: TextStyle(
-              fontStyle: FontStyle.normal,
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            keyboardType: keyboardType,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return '$label is required';
+              }
+              return null;
+            },
           ),
-        ),
-        const SizedBox(height: 15),
-      ],
+        ],
+      ),
     );
   }
 }

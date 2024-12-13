@@ -141,7 +141,7 @@ class LostAndFoundScreen extends StatelessWidget {
                             child: const Row(
                               children: [
                                 Text(
-                                  'Found',
+                                  'Report',
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(width: 8),
@@ -167,7 +167,7 @@ class LostAndFoundScreen extends StatelessWidget {
                             child: const Row(
                               children: [
                                 Text(
-                                  'Lost',
+                                  'Claim',
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(width: 8),
