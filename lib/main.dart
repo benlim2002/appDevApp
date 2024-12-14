@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:utmlostnfound/screens/authenticate/login_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await AwesomeNotifications().initialize(
+    null,
+    [
+      NotificationChannel(
+        channelGroupKey: "basic",
+        channelKey: 'basic_channel',
+        channelName: 'Basic Notifications',
+        channelDescription: 'Channel for basic notifications like item found and verified.',
+        defaultColor: Color(0xFF9D50DD),
+        ledColor: Colors.white,
+        channelShowBadge: true, 
+      ),
+    ],
+    channelGroups: [
+      NotificationChannelGroup(channelGroupKey: "basic",
+      channelGroupName: "Basic Group")
+    ]
+  );
+
+
 
   // Initialize Firebase with error handling
   try {
@@ -36,6 +58,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 // SplashScreen widget with a smooth transition
 class SplashScreen extends StatefulWidget {

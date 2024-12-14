@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:utmlostnfound/screens/security/security_appbar.dart'; // Import SecurityAppBar
 import 'package:utmlostnfound/aptScreen.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 
 class SecurityPersonnelDashboard extends StatefulWidget {
   const SecurityPersonnelDashboard({super.key});
@@ -25,7 +26,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
   DocumentSnapshot? lastDocument;
   List<DocumentSnapshot> allItems = [];
   List<DocumentSnapshot> filteredItems = []; // List for filtered items
-  String currentFilter = 'all'; // Default to 'all'
+  String currentFilter = 'Found'; // Default to 'all'
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
 
@@ -35,6 +36,150 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     _loadDashboardMetrics();
     _loadMoreItems();  // Load the first batch of items immediately
   }
+
+  void _showVerificationDialog(String itemId, String verificationStatus) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Verify Item Recieved'),
+          content: verificationStatus == "no"
+              ? const Text('Do you want to verify that this item has been secured?')
+              : const Text('This item is already verified.'),
+          actions: <Widget>[
+            if (verificationStatus == "no") ...[
+              TextButton(
+                onPressed: () {
+                  // Verify the item by changing the verification status to "yes"
+                  _updateItemVerificationStatus(itemId, "yes");
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Verify'),
+              ),
+            ],
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Future<void> _updateItemVerificationStatus(String itemId, String verificationStatus) async {
+  try {
+    // Update the 'verification' field in Firestore to 'yes'
+    await FirebaseFirestore.instance
+        .collection('items')
+        .doc(itemId)
+        .update({
+      'verification': verificationStatus, // Mark the item as verified
+    });
+
+    // Optionally, update the local list of items to reflect the change
+    setState(() {
+      allItems = allItems.map((item) {
+        if (item['id'] == itemId) {
+          item['verification'] == verificationStatus;  // Corrected this part to update correctly
+        }
+        return item;
+      }).toList();
+    });
+
+    // Send a notification if verification is successful
+    if (verificationStatus == 'yes') {
+      AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: 100, // Ensure this ID is unique for each notification
+          channelKey: 'basic_channel',
+          title: 'Item Verified',
+          body: 'The item you posted has been verified as secured.',
+          notificationLayout: NotificationLayout.Default,
+        ),
+      );
+    }
+
+    // Show a confirmation message to the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Item has been verified')),
+    );
+  } catch (error) {
+    print('Error updating verification status: $error');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Error verifying the item')),
+    );
+  }
+}
+
+
+  void _showChangePostTypeDialog(String itemId, String currentPostType) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Change Status'),
+          content: const Text('Select a new post type for this item:'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                // Update the postType to "Found" in Firestore
+                _updatePostType(itemId, 'Found');
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Found'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Cancel and close the dialog
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updatePostType(String itemId, String newPostType) async {
+    try {
+      // Update the postType field in Firestore
+      await FirebaseFirestore.instance
+          .collection('items')  // Reference to the 'items' collection
+          .doc(itemId)  // The document ID of the item you want to update
+          .update({
+            'postType': newPostType,  // Update the 'postType' field
+          });
+
+      // After updating the Firestore document, update the local list of items
+      setState(() {
+        allItems = allItems.map((item) {
+          if (item['id'] == itemId) {
+            item['postType'] == newPostType;  // Update the local postType
+          }
+          return item;
+        }).toList();
+      });
+
+      // Optionally, apply search filter again to show updated items
+      _applySearchFilter();
+
+      // Show a confirmation message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Post type updated to $newPostType')),
+      );
+    } catch (error) {
+      print('Error updating postType: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error updating post type')),
+      );
+    }
+  }
+
 
   // Load metrics like total, Found, lost, and approved items
   Future<void> _loadDashboardMetrics() async {
@@ -46,7 +191,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
           .get();
       final lostSnapshot = await _firestore
           .collection('items')
-          .where('postType', isEqualTo: 'lost')
+          .where('postType', isEqualTo: 'Lost')
           .get();
       final approvedSnapshot = await _firestore
           .collection('items')
@@ -70,6 +215,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
       );
     }
   }
+
 
   // Fetch paginated data based on the current filter (Found, lost, all, or approved)
   Future<void> _loadMoreItems() async {
@@ -176,13 +322,13 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterButton("All", 'all', totalItems),
+                      _buildFilterButton("Found", 'Found', itemsFound),
+                      const SizedBox(width: 16),
+                      _buildFilterButton("Lost", 'Lost', itemsLost),
                       const SizedBox(width: 16),
                       _buildFilterButton("Approved", 'approved', itemsApproved),
                       const SizedBox(width: 16),
-                      _buildFilterButton("Found", 'Found', itemsFound),
-                      const SizedBox(width: 16),
-                      _buildFilterButton("Lost", 'lost', itemsLost),
+                      _buildFilterButton("All", 'all', totalItems),
                     ],
                   ),
                 ),
@@ -261,45 +407,68 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
   }
 
   Widget _buildListItem(Map<String, dynamic> item) {
+    String verificationStatus = item['verification'] ?? "no"; // Check the verification status
+
     return GestureDetector(
-      onTap: item['postType'] == 'approved'
-          ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AptScreen(itemId: item['id'], userRole: '',),
-                ),
-              );
-            }
-          : null,
+      onTap: item['postType'] == 'Found' && verificationStatus == "no"
+          ? () => _showVerificationDialog(item['id'], verificationStatus)
+          : null, // Only show the dialog if the item is found and not verified
       child: Card(
         elevation: 2,
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: ListTile(
-          leading: Padding(
-            padding: const EdgeInsets.only(top: 10.0),
-            child: item['photo_url'] != null && item['photo_url'].isNotEmpty
-                ? ClipRRect(
+          leading: item['photo_url'] != null && item['photo_url'].isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: CachedNetworkImage(
                       imageUrl: item['photo_url'],
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => const CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                      placeholder: (context, url) =>
+                          const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.broken_image, size: 50, color: Colors.grey),
                     ),
-                  )
-                : const Icon(Icons.image_not_supported),
+                  ),
+                )
+              : null,
+          title: Text(
+            item['item'] ?? 'Unknown Item',
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          title: Text(item['item'] ?? 'Unknown Item',
-            style: const TextStyle(
-            fontWeight: FontWeight.bold, // Makes the text bold
-          ),),  // Change here to use item name
-          subtitle: Text(
-            'Status: ${item['postType']}\nDescription: ${item['description'] ?? "No description"}',
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Status: ${item['postType']}'),
+              Text('Description: ${item['description'] ?? "No description"}'),
+              if (item['postType'] == 'Found') ...[
+                // Show verification status if the item is found
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      verificationStatus == 'yes' ? Icons.check_circle : Icons.error,
+                      color: verificationStatus == 'yes' ? Colors.green : Colors.red,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      verificationStatus == 'yes' ? 'Verified' : 'Not Verified',
+                      style: TextStyle(
+                        color: verificationStatus == 'yes' ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
           isThreeLine: true,
+          onTap: item['postType'] == 'Lost' ? () => _showChangePostTypeDialog(item['id'], item['postType']) : null,
         ),
       ),
     );

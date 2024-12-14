@@ -23,6 +23,10 @@ dependencies:
   intl: ^0.19.0
   uuid: ^4.5.1
   http: ^1.2.2
+  url_launcher: ^6.3.1
+  permission_handler: ^11.3.1
+  firebase_messaging: ^15.1.6
+  awesome_notifications: ^0.10.0
   
 
 dev_dependencies:
@@ -50,3 +54,4 @@ flutter:
     - assets/asset3.jpg
     - assets/home.png
     - assets/icons/icon.png
+    - assets/default_profile.png

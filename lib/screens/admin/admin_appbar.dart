@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/screens/admin/admin_dashboard.dart'; // Admin Dashboard screen
+import 'package:utmlostnfound/screens/admin/admin_profile.dart';
 import 'package:utmlostnfound/screens/admin/appointment.dart'; // Approval screen
 import 'package:utmlostnfound/main.dart'; // Your main app entry
 import 'package:utmlostnfound/screens/admin/view_users.dart';
 import 'package:utmlostnfound/screens/admin/add_security_personnel.dart';
-import 'package:utmlostnfound/screens/home/profile.dart';
 
 class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -56,7 +56,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
       case 'profile':
         Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const ProfileScreen()), // Replace `ProfileScreen` with the actual Profile screen widget
+        MaterialPageRoute(builder: (context) => const AdminProfile()), // Replace `ProfileScreen` with the actual Profile screen widget
       );
         break;
       case 'settings':

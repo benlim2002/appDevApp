@@ -150,7 +150,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
               const SizedBox(height: 20),
               // Confirm button
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_selectedDate != null && _selectedTime != null) {
                     // Combine date and time to set the full appointment
                     final DateTime appointmentDateTime = DateTime(
@@ -161,20 +161,41 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       _selectedTime!.minute,
                     );
 
-                    // Update the Firestore document with the appointment date and time, and status to approved
-                    item.reference.update({
-                      'aptDate': appointmentDateTime,
-                      'postType': 'approved', // Change the status to "approved"
-                    }).then((_) {
+                    try {
+                      // Show a loading indicator while the operation is in progress
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return const Center(child: CircularProgressIndicator());
+                        },
+                      );
+
+                      // Update Firestore document
+                      await item.reference.update({
+                        'aptDate': appointmentDateTime,
+                        'postType': 'approved', // Change the status to "approved"
+                      });
+
+                      // Close the loading indicator
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Appointment confirmed successfully')),
                       );
+
                       Navigator.of(context).pop(); // Close the dialog
-                    }).catchError((error) {
+                    } catch (error) {
+                      if (mounted) {
+                        Navigator.of(context).pop(); // Close the loading indicator
+                      }
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Error: $error')),
                       );
-                    });
+                    }
                   } else {
                     // Show error if no date or time is selected
                     ScaffoldMessenger.of(context).showSnackBar(

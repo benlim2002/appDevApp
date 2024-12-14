@@ -23,6 +23,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
   DateTime? _selectedDate;
+  String? _selectedFaculty;
   String? _postType = 'Lost'; // Default value for Post Type
 
   File? _imageFile;
@@ -215,6 +216,41 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                       keyboardType: TextInputType.phone,
                     ),
                     _buildField("Location", "Enter location", _locationController),
+                    const Text('Faculty', style: TextStyle(fontSize: 16)),
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: _selectedFaculty,
+                        items: [
+                          'Faculty of Computing', 
+                          'Faculty of Civil Engineering', 
+                          'Faculty of Mechanical Engineering', 
+                          'Faculty of Electrical Engineering', 
+                          'Faculty of Chemical and Energy Engineering', 
+                          'Faculty of Science', 
+                          'Faculty of Built Environment and Surveying ', 
+                          'Faculty of Management',
+                          'Faculty of Social Sciences and Humanities'
+                        ].map((faculty) => DropdownMenuItem(
+                          value: faculty,
+                          child: Text(faculty),
+                        )).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedFaculty = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
                     const Text("Date", style: TextStyle(fontSize: 16)),
                     GestureDetector(
                       onTap: () => _selectDate(context),
@@ -267,6 +303,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
 
 
                     // Upload Photo
+                    const SizedBox(height: 15),
                     const Text("Upload Photo", style: TextStyle(fontSize: 16)),
                     ElevatedButton.icon(
                       onPressed: _uploadPhoto,
@@ -299,10 +336,12 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                                   'item': _itemController.text,
                                   'contact': _contactController.text,
                                   'location': _locationController.text,
+                                  'faculty': _selectedFaculty,
                                   'description': _descriptionController.text,
                                   'postType': _postType,
                                   'date': formattedDate,
-                                  'photoUrl': _photoUrl,
+                                  'verification': "no",
+                                  'photo_Url': _photoUrl,
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
 

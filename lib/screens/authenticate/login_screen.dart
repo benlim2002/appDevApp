@@ -6,6 +6,25 @@ import 'package:utmlostnfound/screens/authenticate/register_screen.dart';
 import 'package:utmlostnfound/screens/home/home.dart';
 import 'package:utmlostnfound/screens/security/security_dashboard.dart';
 import 'package:utmlostnfound/services/services.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+// Function to store the user's FCM token
+Future<void> storeUserToken() async {
+  FirebaseAuth auth = FirebaseAuth.instance;
+  User? user = auth.currentUser;
+
+  if (user != null) {
+    String uid = user.uid;
+    String? token = await FirebaseMessaging.instance.getToken();
+
+    if (token != null) {
+      // Store the token in Firestore under the user's document
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'fcm_token': token,
+      });
+    }
+  }
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,6 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
         if (userDoc.exists) {
           String? role = userDoc.get('role');
           
+          // Store the user's FCM token
+          await storeUserToken();
+
           // Redirect based on the role
           if (role == 'admin') {
             Navigator.pushReplacement(

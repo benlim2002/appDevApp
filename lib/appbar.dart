@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:utmlostnfound/screens/home/profile.dart';  // Import ProfileScreen here
 import 'package:utmlostnfound/main.dart';
-import 'package:utmlostnfound/screens/home/profile.dart'; // Make sure to import your ProfileScreen here
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final VoidCallback? onTitleTap;  // Make onTitleTap nullable and optional
 
-  const CustomAppBar({super.key, required this.title});
+  const CustomAppBar({
+    super.key,
+    required this.title,
+    this.onTitleTap, // Make it optional with a nullable type
+  });
 
   Future<void> _handleLogout(BuildContext context) async {
     final bool? logoutConfirmed = await showDialog<bool>(
@@ -49,16 +54,20 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _onMenuSelected(BuildContext context, String value) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     switch (value) {
       case 'profile':
-        // Navigate to ProfileScreen when Profile is selected
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()), // Navigate to ProfileScreen
-        );
+        if (currentUser == null) {
+          _showSignInDialog(context);  // Show dialog when not signed in
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
+        }
         break;
       case 'settings':
-        // Add navigation to Settings page here
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Navigating to Settings")),
         );
@@ -69,18 +78,38 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
+  void _showSignInDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Sign In Required"),
+        content: const Text("You must be signed in to access the profile."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Use the app's TextTheme for the title and PopupMenuItems
     final TextTheme textTheme = Theme.of(context).textTheme;
 
+    bool isUserSignedIn = FirebaseAuth.instance.currentUser != null;
+
     return AppBar(
-      title: Text(
-        title,
-        style: textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w900, // Make the title bold
-          fontSize: 26, // Optional: increase font size for more emphasis
-          letterSpacing: 0.1,
+      title: GestureDetector(
+        onTap: onTitleTap, // Only trigger onTap if onTitleTap is provided
+        child: Text(
+          title,
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+            fontSize: 26,
+            letterSpacing: 0.1,
+          ),
         ),
       ),
       centerTitle: true,
@@ -89,25 +118,42 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onSelected: (value) => _onMenuSelected(context, value),
           itemBuilder: (BuildContext context) {
             return [
-              PopupMenuItem(
-                value: 'profile',
-                child: Text(
-                  "Profile",
-                  style: textTheme.bodyMedium, // Use bodyText2 style for consistency
+              if (isUserSignedIn) ...[
+                PopupMenuItem(
+                  value: 'profile',
+                  child: Text(
+                    "Profile",
+                    style: textTheme.bodyMedium,
+                  ),
                 ),
-              ),
+              ] else ...[
+                PopupMenuItem(
+                  value: 'profile',
+                  child: GestureDetector(
+                    onTap: () {
+                      _showSignInDialog(context);  // Show dialog for profile
+                    },
+                    child: Text(
+                      "Profile (Sign In Required)",
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey,  // Inactive text color
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               PopupMenuItem(
                 value: 'settings',
                 child: Text(
                   "Settings",
-                  style: textTheme.bodyMedium, // Use bodyText2 style for consistency
+                  style: textTheme.bodyMedium,
                 ),
               ),
               PopupMenuItem(
                 value: 'logout',
                 child: Text(
                   "Logout",
-                  style: textTheme.bodyMedium, // Use bodyText2 style for consistency
+                  style: textTheme.bodyMedium,
                 ),
               ),
             ];

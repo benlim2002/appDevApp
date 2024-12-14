@@ -29,6 +29,7 @@ class _AddSecurityPersonnelScreenState
 
   File? _imageFile;
   String? _photoUrl;
+   String? _selectedWorkArea;
 
   Future<void> _uploadPhoto() async {
     final picker = ImagePicker();
@@ -97,6 +98,7 @@ class _AddSecurityPersonnelScreenState
           'name': name,
           'email': email,
           'profileImage': photoUrl,
+          'workArea': _selectedWorkArea,
           'role': 'security', 
           'created_at': FieldValue.serverTimestamp(),
         });
@@ -169,6 +171,52 @@ class _AddSecurityPersonnelScreenState
     ],
   );
 }
+
+Widget _buildWorkAreaField() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        "Area:", // Label for the dropdown
+        style: TextStyle(fontSize: 16),
+      ),
+      const SizedBox(height: 5),
+      Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: _selectedWorkArea,
+          items: [
+              'Front Gate',
+              'KTDI',
+              'KTR',
+              'KDSE',
+              'KTF',
+              'K9K10',
+              'KDOJ',
+          ].map((faculty) => DropdownMenuItem(
+            value: faculty,
+            child: Text(faculty),
+          )).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedWorkArea = value;
+            });
+          },
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.5),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 15),
+    ],
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -250,8 +298,10 @@ class _AddSecurityPersonnelScreenState
 
                           // Form fields with reduced space above them
                           _buildField("Name", "Enter security personnel's name", _nameController),
+                          _buildWorkAreaField(),
                           _buildField("Email", "Enter email", _emailController),
                           _buildField("Password", "Enter password", _passwordController),
+                          
                           const SizedBox(height: 20),
 
                           // Add Security Personnel button

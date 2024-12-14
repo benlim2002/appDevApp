@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Correct Firestore import
 import 'package:firebase_auth/firebase_auth.dart'; // For Firebase Authentication
 import 'package:utmlostnfound/appbar.dart'; // Import your custom app bar
@@ -24,6 +27,37 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     item = widget.item; // Initialize the item state
   }
 
+  String _formatTimestamp(String timestampString) {
+    try {
+      // Convert the string to an integer
+      final int timestamp = int.parse(timestampString);
+
+      // Convert Unix timestamp (milliseconds) to a DateTime object
+      final DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+
+      // Format the DateTime to a readable time format (e.g., 03:45 PM)
+      return DateFormat('hh:mm a').format(dateTime);
+    } catch (e) {
+      // If an error occurs, return an empty string or error message
+      return '';
+    }
+  }
+
+  void _launchDialer(String phoneNumber) async {
+    final PermissionStatus status = await Permission.phone.request();
+
+    if (status.isGranted) {
+      final Uri url = Uri(scheme: 'tel', path: phoneNumber);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } else {
+      throw 'Phone permission not granted';
+    }
+  }
+
   // Function to show confirmation dialog and update the status if confirmed
   void _showConfirmationDialog() {
     showDialog(
@@ -36,15 +70,15 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             // Cancel Button
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog without doing anything
+                Navigator.of(context).pop(); 
               },
               child: const Text("Cancel"),
             ),
             // Confirm Button
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _updateStatusToTBD(); // Update status to TBD
+                Navigator.of(context).pop(); 
+                _updateStatusToTBD(); 
               },
               child: const Text("Confirm"),
             ),
@@ -72,8 +106,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         return; // Exit if the document does not exist
       }
 
-      // Get current user details (if logged in)
-      String aptMadeBy = "Guest"; // Default to guest if no user is logged in
+
+      String aptMadeBy = "Guest"; 
       if (FirebaseAuth.instance.currentUser != null) {
         // User is authenticated, fetch their details
         final user = FirebaseAuth.instance.currentUser!;
@@ -86,15 +120,14 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         }
       }
 
-      // Proceed to update the document's status to "TBD" and add who made the appointment
+      
       await itemRef.update({
-        'postType': 'TBD', // Update the status field
-        'aptMadeBy': aptMadeBy, // Store the user/guest name
-        'userPhone': aptMadeBy == "Guest" ? null : userPhone, // Store phone number if user
+        'postType': 'TBD', 
+        'aptMadeBy': aptMadeBy, 
+        'userPhone': aptMadeBy == "Guest" ? null : userPhone, 
       });
 
-      // Successfully updated the status
-      // ignore: use_build_context_synchronously
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Item status updated to TBD and appointment recorded.")),
       );
@@ -119,6 +152,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
+              Color(0xFFFFE6E6), // Light pink
+              Color(0xFFFFE6E6), // Light pink
+              Color(0xFFFFE6E6), // Light pink
               Color(0xFFFFE6E6), // Light pink
               Color(0xFFDFFFD6), // Light green
             ],
@@ -172,6 +208,37 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+
+                           // Show a message if the item is verified
+                            if (item['verification'] == 'yes') ...[
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[50], 
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.green), 
+                                ),
+                                child: const Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.verified,
+                                      color: Colors.green,
+                                    ),
+                                    const SizedBox(width: 27),
+                                    Text(
+                                      "This item is ready for retrieval.",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+
                             // Item Title
                             Text(
                               item['item'] ?? 'Unknown Item',
@@ -230,7 +297,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                           style: const TextStyle(fontSize: 16),
                                         ),
                                         Text(
-                                          "${item['date'] ?? ''}",
+                                          "${item['date'] ?? ''} ${item['timestamp'] != null ? 'at ' + _formatTimestamp(item['timestamp']) : ''}",
                                           style: const TextStyle(
                                             fontSize: 14,
                                             color: Colors.black54,
@@ -242,28 +309,30 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
-                                    final contact = item['contact'] ?? 'Unknown Contact';
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text("Contact: $contact"),
-                                      ),
-                                    );
+                                    final phoneNumber = item['contact'] ?? '';
+
+                                    if (phoneNumber.isNotEmpty) {
+                                      try {
+                                        // Use the _launchDialer function
+                                        _launchDialer(phoneNumber);
+                                      } catch (e) {
+                                        // Handle exceptions and show a SnackBar
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to launch dialer: $e')),
+                                        );
+                                      }
+                                    } else {
+                                      // Handle case if no phone number is available
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text("No phone number available")),
+                                      );
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF6C63FF), // Light purple
+                                    backgroundColor: const Color.fromARGB(255, 123, 125, 230),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
                                   ),
-                                  child: const Text(
-                                    "Contact",
-                                    style: TextStyle(fontSize: 14),
-                                  ),
+                                  child: const Text("Contact"),
                                 ),
                               ],
                             ),

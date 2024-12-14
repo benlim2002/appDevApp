@@ -42,12 +42,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _image;
 
-  @override
-  void initState() {
-    super.initState();
-    _user = _auth.currentUser;
+@override
+void initState() {
+  super.initState();
+  _user = _auth.currentUser;
+
+  // If the user is not signed in or signed in as guest, show an alert dialog
+  if (_user == null || _user!.isAnonymous) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showAlertDialog();
+    });
+  } else {
+    // If signed in as a regular user, load the profile data
     _loadUserData();
   }
+}
+
+void _showAlertDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false,  // Prevent closing dialog by tapping outside
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Access Denied"),
+        content: const Text("You need to be signed in as a UTM user to access your own profile."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              // You can choose to navigate to the login or home screen after closing the dialog
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LostAndFoundScreen()), // Or your LoginScreen
+              );
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   // Load user data from Firestore
   Future<void> _loadUserData() async {
@@ -75,6 +110,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'phone': _phoneController.text,
         'faculty': _selectedFaculty,
       });
+      
+      
+      final oldPassword = _oldPasswordController.text;
+      final newPassword = _newPasswordController.text;
+      final confirmNewPassword = _confirmNewPasswordController.text;
+
+      if (newPassword != confirmNewPassword) {
+        _showErrorDialog("New passwords do not match.");
+        return;
+      }
+
+      try {
+        final cred = EmailAuthProvider.credential(
+          email: _user!.email!,
+          password: oldPassword,
+        );
+        await _user!.reauthenticateWithCredential(cred);
+        await _user!.updatePassword(newPassword);
+        _showSuccessDialog("Password updated successfully.");
+      } catch (e) {
+        _showErrorDialog("Error: ${e.toString()}");
+      }
 
       setState(() {
         _name = _nameController.text;
@@ -278,8 +335,12 @@ Future<void> _pickImage() async {
                     _buildEditableTextField('Name', _nameController),
                     _buildEditableTextField('Phone', _phoneController),
                     _buildFacultyDropdown(),
+                    _buildPasswordTextField('Enter old password', _oldPasswordController, _isOldPasswordObscure),
+                    _buildPasswordTextField('Enter new password', _newPasswordController, _isNewPasswordObscure),
+                    _buildPasswordTextField('Confirm new password', _confirmNewPasswordController, _isConfirmNewPasswordObscure),
 
-                    const SizedBox(height: 35),
+
+                    const SizedBox(height: 25),
 
                     // Update Profile button
                     Center(
@@ -296,37 +357,6 @@ Future<void> _pickImage() async {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
-
-                    const Center( 
-                      child: Text(
-                        'Change Password',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Password change section
-                    _buildPasswordTextField('Enter old password', _oldPasswordController, _isOldPasswordObscure),
-                    _buildPasswordTextField('Enter new password', _newPasswordController, _isNewPasswordObscure),
-                    _buildPasswordTextField('Confirm new password', _confirmNewPasswordController, _isConfirmNewPasswordObscure),
-
-                    const SizedBox(height: 25),
-
-                    // Submit button to change password
-                    Center(
-                      child: SizedBox(
-                        width: 300, 
-                        child: ElevatedButton(
-                          onPressed: _changePassword,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 250, 227, 222),
-                            padding: const EdgeInsets.symmetric(horizontal: 30),
-                          ),
-                          child: const Text('Change Password'),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 15),
                   ],
                 ),
@@ -338,98 +368,145 @@ Future<void> _pickImage() async {
     );
   }
 
- Widget _buildNonEditableField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          Text(value, style: const TextStyle(fontSize: 15)),
-        ],
-      ),
-    );
-  }
- Widget _buildEditableTextField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-      ),
-    );
-  }
-Widget _buildFacultyDropdown() {
+Widget _buildNonEditableField(String label, String value) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Faculty', style: TextStyle(fontSize: 13)),
-        DropdownButtonFormField<String>(
-          isExpanded: true,
-          value: _selectedFaculty,
-          items: [
-            'Faculty of Computing',
-            'Faculty of Civil Engineering',
-            'Faculty of Mechanical Engineering',
-            'Faculty of Electrical Engineering',
-            'Faculty of Chemical and Energy Engineering',
-            'Faculty of Science',
-            'Faculty of Built Environment and Surveying',
-            'Faculty of Management',
-            'Faculty of Social Sciences and Humanities'
-          ].map((faculty) => DropdownMenuItem(
-                value: faculty,
-                child: Text(faculty),
-              )).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedFaculty = value;
-            });
-          },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color.fromARGB(255, 253, 253, 253),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background to white
+        borderRadius: BorderRadius.circular(8), // Match rounded corners
+        border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like in the screenshot
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 10), // Space between label and value
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 15, color: Colors.black54), // Slightly faded value text
+              overflow: TextOverflow.ellipsis, // In case value overflows
+              maxLines: 1, // Limit text to 1 line
             ),
           ),
-        ),
-      ],
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildEditableTextField(String label, TextEditingController controller) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background to white
+        borderRadius: BorderRadius.circular(8), // Rounded corners
+        border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like non-editable field
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                border: InputBorder.none, // Remove the default input border
+                hintText: 'Enter your $label', // Add hint text to guide the user
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
 
 
-  Widget _buildPasswordTextField(
+Widget _buildFacultyDropdown() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background to white
+        borderRadius: BorderRadius.circular(8), // Rounded corners
+        border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like the TextField
+      ),
+      child: DropdownButtonFormField<String>(
+        isExpanded: true,
+        value: _selectedFaculty,
+        items: [
+          'Faculty of Computing',
+          'Faculty of Civil Engineering',
+          'Faculty of Mechanical Engineering',
+          'Faculty of Electrical Engineering',
+          'Faculty of Chemical and Energy Engineering',
+          'Faculty of Science',
+          'Faculty of Built Environment and Surveying',
+          'Faculty of Management',
+          'Faculty of Social Sciences and Humanities'
+        ].map((faculty) => DropdownMenuItem(
+              value: faculty,
+              child: Text(faculty),
+            )).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedFaculty = value;
+          });
+        },
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.zero, // Remove extra padding from the input field
+          border: InputBorder.none, // Remove the default input border
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildPasswordTextField(
       String label, TextEditingController controller, bool isObscure) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        controller: controller,
-        obscureText: isObscure,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-          suffixIcon: IconButton(
-            icon: Icon(
-              isObscure ? Icons.visibility_off : Icons.visibility,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white, // Set background to white
+          borderRadius: BorderRadius.circular(8), // Rounded corners
+          border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like the Dropdown
+        ),
+        child: TextField(
+          controller: controller,
+          obscureText: isObscure,
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // Match label style
+            border: InputBorder.none, // Remove default border to match the container's border
+            suffixIcon: IconButton(
+              icon: Icon(
+                isObscure ? Icons.visibility_off : Icons.visibility,
+              ),
+              onPressed: () {
+                setState(() {
+                  if (label == 'Enter old password') {
+                    _isOldPasswordObscure = !_isOldPasswordObscure;
+                  } else if (label == 'Enter new password') {
+                    _isNewPasswordObscure = !_isNewPasswordObscure;
+                  } else {
+                    _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
+                  }
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                if (label == 'Enter old password') {
-                  _isOldPasswordObscure = !_isOldPasswordObscure;
-                } else if (label == 'Enter new password') {
-                  _isNewPasswordObscure = !_isNewPasswordObscure;
-                } else {
-                  _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
-                }
-              });
-            },
           ),
         ),
       ),

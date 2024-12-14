@@ -71,6 +71,28 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
         'phone': _phoneController.text,
         'workArea': _selectedWorkArea,
       });
+      
+      
+      final oldPassword = _oldPasswordController.text;
+      final newPassword = _newPasswordController.text;
+      final confirmNewPassword = _confirmNewPasswordController.text;
+
+      if (newPassword != confirmNewPassword) {
+        _showErrorDialog("New passwords do not match.");
+        return;
+      }
+
+      try {
+        final cred = EmailAuthProvider.credential(
+          email: _user!.email!,
+          password: oldPassword,
+        );
+        await _user!.reauthenticateWithCredential(cred);
+        await _user!.updatePassword(newPassword);
+        _showSuccessDialog("Password updated successfully.");
+      } catch (e) {
+        _showErrorDialog("Error: ${e.toString()}");
+      }
 
       setState(() {
         _name = _nameController.text;
@@ -88,29 +110,6 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
     }
   }
 
-  // Method to change password
-  Future<void> _changePassword() async {
-    final oldPassword = _oldPasswordController.text;
-    final newPassword = _newPasswordController.text;
-    final confirmNewPassword = _confirmNewPasswordController.text;
-
-    if (newPassword != confirmNewPassword) {
-      _showErrorDialog("New passwords do not match.");
-      return;
-    }
-
-    try {
-      final cred = EmailAuthProvider.credential(
-        email: _user!.email!,
-        password: oldPassword,
-      );
-      await _user!.reauthenticateWithCredential(cred);
-      await _user!.updatePassword(newPassword);
-      _showSuccessDialog("Password updated successfully.");
-    } catch (e) {
-      _showErrorDialog("Error: ${e.toString()}");
-    }
-  }
 
   // Method to pick and upload image to Cloudinary
   Future<void> _pickImage() async {
@@ -263,6 +262,9 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
                     _buildEditableTextField('Name', _nameController),
                     _buildEditableTextField('Phone', _phoneController),
                     _buildWorkAreaDropdown(),
+                    _buildPasswordTextField('Enter old password', _oldPasswordController, _isOldPasswordObscure),
+                    _buildPasswordTextField('Enter new password', _newPasswordController, _isNewPasswordObscure),
+                    _buildPasswordTextField('Confirm new password', _confirmNewPasswordController, _isConfirmNewPasswordObscure),
 
                     const SizedBox(height: 35),
 
@@ -280,36 +282,8 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
-
-                    const Center( 
-                      child: Text(
-                        'Change Password',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    _buildPasswordTextField('Enter old password', _oldPasswordController, _isOldPasswordObscure),
-                    _buildPasswordTextField('Enter new password', _newPasswordController, _isNewPasswordObscure),
-                    _buildPasswordTextField('Confirm new password', _confirmNewPasswordController, _isConfirmNewPasswordObscure),
-
-                    const SizedBox(height: 25),
-
-                    Center(
-                      child: SizedBox(
-                        width: 300, 
-                        child: ElevatedButton(
-                          onPressed: _changePassword,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 250, 227, 222),
-                            padding: const EdgeInsets.symmetric(horizontal: 30),
-                          ),
-                          child: const Text('Change Password'),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 15),
+
                   ],
                 ),
               ),
@@ -320,97 +294,143 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
     );
   }
 
-  Widget _buildNonEditableField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+
+Widget _buildNonEditableField(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background to white
+        borderRadius: BorderRadius.circular(8), // Match rounded corners
+        border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like in the screenshot
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          Text(value, style: const TextStyle(fontSize: 15)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 10), // Space between label and value
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 15, color: Colors.black54), // Slightly faded value text
+              overflow: TextOverflow.ellipsis, // In case value overflows
+              maxLines: 1, // Limit text to 1 line
+            ),
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildEditableTextField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-        ),
+Widget _buildEditableTextField(String label, TextEditingController controller) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background to white
+        borderRadius: BorderRadius.circular(8), // Rounded corners
+        border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like non-editable field
       ),
-    );
-  }
-
-  Widget _buildWorkAreaDropdown() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text('Work Area', style: TextStyle(fontSize: 13)),
-          DropdownButtonFormField<String>(
-            isExpanded: true,
-            value: _selectedWorkArea,
-            items: [
-              'Front Gate',
-              'KTDI Area',
-              'KTR Area',
-              'KDSE Area',
-              'KTF Area',
-              'K9K10 Area',
-              'KDOJ Area',
-            ].map((workArea) => DropdownMenuItem(
-                  value: workArea,
-                  child: Text(workArea),
-                )).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedWorkArea = value;
-              });
-            },
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color.fromARGB(255, 253, 253, 253),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                border: InputBorder.none, // Remove the default input border
+                hintText: 'Enter your $label', // Add hint text to guide the user
               ),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildPasswordTextField(
+Widget _buildWorkAreaDropdown() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background to white
+        borderRadius: BorderRadius.circular(8), // Rounded corners
+        border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like the TextField
+      ),
+      child: DropdownButtonFormField<String>(
+        isExpanded: true,
+        value: _selectedWorkArea,
+        items: [
+              'Front Gate',
+              'KTDI',
+              'KTR',
+              'KDSE',
+              'KTF',
+              'K9K10',
+              'KDOJ',
+        ].map((faculty) => DropdownMenuItem(
+              value: faculty,
+              child: Text(faculty),
+            )).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedWorkArea = value;
+          });
+        },
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.zero, // Remove extra padding from the input field
+          border: InputBorder.none, // Remove the default input border
+        ),
+      ),
+    ),
+  );
+}
+  
+Widget _buildPasswordTextField(
       String label, TextEditingController controller, bool isObscure) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        controller: controller,
-        obscureText: isObscure,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-          suffixIcon: IconButton(
-            icon: Icon(
-              isObscure ? Icons.visibility_off : Icons.visibility,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white, // Set background to white
+          borderRadius: BorderRadius.circular(8), // Rounded corners
+          border: Border.all(color: Colors.grey.withOpacity(0.4)), // Lighter border like the Dropdown
+        ),
+        child: TextField(
+          controller: controller,
+          obscureText: isObscure,
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // Match label style
+            border: InputBorder.none, // Remove default border to match the container's border
+            suffixIcon: IconButton(
+              icon: Icon(
+                isObscure ? Icons.visibility_off : Icons.visibility,
+              ),
+              onPressed: () {
+                setState(() {
+                  if (label == 'Enter old password') {
+                    _isOldPasswordObscure = !_isOldPasswordObscure;
+                  } else if (label == 'Enter new password') {
+                    _isNewPasswordObscure = !_isNewPasswordObscure;
+                  } else {
+                    _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
+                  }
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                if (label == 'Enter old password') {
-                  _isOldPasswordObscure = !_isOldPasswordObscure;
-                } else if (label == 'Enter new password') {
-                  _isNewPasswordObscure = !_isNewPasswordObscure;
-                } else {
-                  _isConfirmNewPasswordObscure = !_isConfirmNewPasswordObscure;
-                }
-              });
-            },
           ),
         ),
       ),
