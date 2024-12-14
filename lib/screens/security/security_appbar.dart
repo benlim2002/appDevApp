@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/main.dart'; // Your main app entry
-import 'package:utmlostnfound/screens/home/profile.dart';
+import 'package:utmlostnfound/screens/security/security_profile.dart';
 import 'package:utmlostnfound/screens/security/security_dashboard.dart';
 import 'package:utmlostnfound/screens/security/security_appointment.dart';
 import 'package:utmlostnfound/screens/security/security_users.dart';
@@ -56,7 +56,7 @@ class SecurityAppBar extends StatelessWidget implements PreferredSizeWidget {
       case 'profile':
         Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const ProfileScreen()), // Replace `ProfileScreen` with the actual Profile screen widget
+        MaterialPageRoute(builder: (context) => const SecurityProfileScreen()), // Replace `ProfileScreen` with the actual Profile screen widget
       );
         break;
       case 'settings':
