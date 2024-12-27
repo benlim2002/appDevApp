@@ -33,6 +33,7 @@ dependencies:
   pdf: ^3.11.1
   csv: ^6.0.0
   open_file: ^3.5.10
+  printing: ^5.13.4
   
 
 dev_dependencies:

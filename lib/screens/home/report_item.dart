@@ -345,7 +345,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                                   'postType': _postType,
                                   'date': formattedDate,
                                   'verification': "no",
-                                  'photo_Url': _photoUrl,
+                                  'photo_url': _photoUrl,
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
 

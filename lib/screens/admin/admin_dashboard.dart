@@ -3,9 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pdf/pdf.dart';
 import 'package:utmlostnfound/screens/admin/admin_appbar.dart'; // Import AdminAppBar
 // ignore: unused_import
 import 'package:utmlostnfound/aptScreen.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -40,66 +43,130 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   void _showVerificationDialog(String itemId, String verificationStatus) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Verify Item Received'),
-        content: verificationStatus == "no"
-            ? const Text('Do you want to verify that this item has been secured?')
-            : const Text('This item is already verified.'),
-        actions: <Widget>[
-          if (verificationStatus == "no") ...[
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Verify Item Received'),
+          content: verificationStatus == "no"
+              ? const Text('Do you want to verify that this item has been secured?')
+              : const Text('This item is already verified.'),
+          actions: <Widget>[
+            if (verificationStatus == "no") ...[
+              TextButton(
+                onPressed: () {
+                  _updateItemVerificationStatus(itemId, "yes");
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Verify'),
+              ),
+            ],
             TextButton(
               onPressed: () {
-                _updateItemVerificationStatus(itemId, "yes");
                 Navigator.of(context).pop();
               },
-              child: const Text('Verify'),
+              child: const Text('Cancel'),
             ),
           ],
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-Future<void> _updateItemVerificationStatus(String itemId, String verificationStatus) async {
-  try {
-
-    await FirebaseFirestore.instance
-        .collection('items')
-        .doc(itemId)
-        .update({
-      'verification': verificationStatus, // Mark the item as verified
-    });
-
-    // Optionally, update the local list of items to reflect the change
-    setState(() {
-      allItems = allItems.map((item) {
-        if (item['id'] == itemId) {
-          item['verification'] == verificationStatus;  // Update verification status
-        }
-        return item;
-      }).toList();
-    });
-
-    // Show a confirmation message to the user
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Item has been verified')),
-    );
-  } catch (error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error verifying the item')),
+        );
+      },
     );
   }
-}
+
+  Future<void> _updateItemVerificationStatus(String itemId, String verificationStatus) async {
+    try {
+
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(itemId)
+          .update({
+        'verification': verificationStatus, // Mark the item as verified
+      });
+
+      // Optionally, update the local list of items to reflect the change
+      setState(() {
+        allItems = allItems.map((item) {
+          if (item['id'] == itemId) {
+            item['verification'] == verificationStatus;  // Update verification status
+          }
+          return item;
+        }).toList();
+      });
+
+      // Show a confirmation message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item has been verified')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error verifying the item')),
+      );
+    }
+  }
+
+  Future<void> _markAsCollected(String itemId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(itemId)
+          .update({'collectionStatus': 'collected'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Collection confirmed')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error confirming collection: $error')),
+      );
+    }
+  }
+
+
+  Future<void> _generateCertificate(String finderName) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Center(
+          child: pw.Column(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              pw.Text(
+                'Certificate of Appreciation',
+                style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(
+                'This certificate is awarded to',
+                style: pw.TextStyle(fontSize: 16),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                finderName,
+                style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(
+                'For their honesty and contribution to the UTM Lost & Found community.',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 14),
+              ),
+              pw.SizedBox(height: 30),
+              pw.Text(
+                'UTM Lost & Found Team',
+                style: pw.TextStyle(fontSize: 12, fontStyle: pw.FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Show the generated PDF
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
 
 
   void _showChangePostTypeDialog(String itemId, String currentPostType) {
@@ -130,6 +197,39 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
       },
     );
   }
+
+  void _showConfirmCollectionDialog(String itemId, String finderName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Collection'),
+          content: const Text(
+            'Generate e-certificate for the founder?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                _generateCertificate(finderName);
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Certificate generated successfully')),
+                );
+              },
+              child: const Text('Confirm'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Future<void> _updatePostType(String itemId, String newPostType) async {
     try {
@@ -387,12 +487,18 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
   }
 
   Widget _buildListItem(Map<String, dynamic> item) {
-    String verificationStatus = item['verification'] ?? "no"; // Check the verification status
+  String verificationStatus = item['verification'] ?? "no"; // Check the verification status
 
-    return GestureDetector(
-      onTap: item['postType'] == 'Found' && verificationStatus == "no"
-          ? () => _showVerificationDialog(item['id'], verificationStatus)
-          : null, // Only show the dialog if the item is found and not verified
+  return GestureDetector(
+      onTap: () {
+        if (item['postType'] == 'Found' && verificationStatus == "no") {
+          _showVerificationDialog(item['id'], verificationStatus);
+        } else if (item['postType'] == 'Lost') {
+          _showChangePostTypeDialog(item['id'], item['postType']);
+        } else if (item['postType'] == 'approved') {
+          _showConfirmCollectionDialog(item['id'], item['postType']);
+        }
+      },
       child: Card(
         elevation: 2,
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -425,7 +531,6 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
               Text('Status: ${item['postType']}'),
               Text('Description: ${item['description'] ?? "No description"}'),
               if (item['postType'] == 'Found') ...[
-                // Show verification status if the item is found
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -448,7 +553,6 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
             ],
           ),
           isThreeLine: true,
-          onTap: item['postType'] == 'Lost' ? () => _showChangePostTypeDialog(item['id'], item['postType']) : null, 
         ),
       ),
     );
