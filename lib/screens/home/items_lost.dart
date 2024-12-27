@@ -1,9 +1,13 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// ignore: unnecessary_import
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:utmlostnfound/appbar.dart';
+// ignore: unused_import
 import 'package:utmlostnfound/screens/home/item_details.dart';
 import 'package:utmlostnfound/screens/home/items_found.dart';
 
@@ -149,7 +153,7 @@ class _ItemsLostScreenState extends State<LostItemsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: "Items Lost",
+        title: "Items Lost ↓",
         onTitleTap: () {
           showDialog(
             context: context,

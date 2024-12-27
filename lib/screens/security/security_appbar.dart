@@ -1,9 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/main.dart'; // Your main app entry
 import 'package:utmlostnfound/screens/security/security_profile.dart';
 import 'package:utmlostnfound/screens/security/security_dashboard.dart';
 import 'package:utmlostnfound/screens/security/security_appointment.dart';
+import 'package:utmlostnfound/screens/security/security_stats.dart';
 import 'package:utmlostnfound/screens/security/security_users.dart';
 
 
@@ -99,6 +102,12 @@ class SecurityAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SecurityPersonnelDashboard()),
+                );
+              }),
+              _buildMenuItem(context, 'Statistics', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SecurityStatistics()),
                 );
               }),
               _buildMenuItem(context, 'Appointments', () {

@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, unused_import
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -90,11 +92,10 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
       }).toList();
     });
 
-    // Send a notification if verification is successful
     if (verificationStatus == 'yes') {
       AwesomeNotifications().createNotification(
         content: NotificationContent(
-          id: 100, // Ensure this ID is unique for each notification
+          id: 100, 
           channelKey: 'basic_channel',
           title: 'Item Verified',
           body: 'The item you posted has been verified as secured.',
@@ -103,12 +104,11 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
       );
     }
 
-    // Show a confirmation message to the user
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Item has been verified')),
     );
   } catch (error) {
-    print('Error updating verification status: $error');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Error verifying the item')),
     );
@@ -173,7 +173,6 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
         SnackBar(content: Text('Post type updated to $newPostType')),
       );
     } catch (error) {
-      print('Error updating postType: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error updating post type')),
       );
@@ -206,7 +205,6 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
         isLoading = false;
       });
     } catch (error) {
-      print('Error loading metrics: $error');
       setState(() {
         isLoading = false;
       });
@@ -446,7 +444,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
               Text('Description: ${item['description'] ?? "No description"}'),
               if (item['postType'] == 'Found') ...[
                 // Show verification status if the item is found
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(

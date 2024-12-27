@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+
 import 'dart:io'; // For File handling when picking image
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -150,6 +152,7 @@ void _showAlertDialog() {
   }
 
   // Method to change password
+  // ignore: unused_element
   Future<void> _changePassword() async {
     final oldPassword = _oldPasswordController.text;
     final newPassword = _newPasswordController.text;
@@ -464,7 +467,7 @@ Widget _buildFacultyDropdown() {
             _selectedFaculty = value;
           });
         },
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           contentPadding: EdgeInsets.zero, // Remove extra padding from the input field
           border: InputBorder.none, // Remove the default input border
         ),

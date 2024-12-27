@@ -18,6 +18,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
   String _selectedFaculty = 'All';
   DateTime? _startDate;
   DateTime? _endDate;
+  
 
   final List<String> _faculties = [
     'All',
@@ -60,29 +61,28 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Faculty Dropdown with increased height
                 DropdownButtonFormField<String>(
                   value: selectedFaculty,
                   items: _faculties.map((faculty) {
                     return DropdownMenuItem(
                       value: faculty,
                       child: Container(
-                        height: 50, // Increase height for each item
+                        height: 50, 
                         alignment: Alignment.centerLeft,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
                           faculty,
-                          overflow: TextOverflow.ellipsis, // Prevent overflow if still too long
+                          overflow: TextOverflow.ellipsis, 
                         ),
                       ),
                     );
                   }).toList(),
                   decoration: const InputDecoration(labelText: "Faculty"),
-                  isExpanded: true, // Make dropdown expand to fill the width
+                  isExpanded: true,
                   onChanged: (value) => selectedFaculty = value ?? 'All',
                 ),
                 const SizedBox(height: 10),
-                // Date Range Selector
+                
                 ElevatedButton(
                   onPressed: () async {
                     final picked = await showDateRangePicker(
@@ -137,8 +137,16 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     }
 
     if (_startDate != null && _endDate != null) {
-      final itemDate = DateTime.tryParse(item['date'] ?? '');
-      if (itemDate == null || itemDate.isBefore(_startDate!) || itemDate.isAfter(_endDate!)) {
+      final itemTimestamp = item['createdAt']; // Firestore Timestamp
+      if (itemTimestamp == null) {
+        return false;
+      }
+      
+      // Convert Firestore Timestamp to DateTime
+      final itemDate = itemTimestamp.toDate();
+      
+      // Check if itemDate is within the range
+      if (itemDate.isBefore(_startDate!) || itemDate.isAfter(_endDate!)) {
         return false;
       }
     }
@@ -146,11 +154,14 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     return true;
   }
 
+  String createdAtString = '';
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: "Items Found",
+        title: "Items Found ↓",
         onTitleTap: () {
           showDialog(
             context: context,
@@ -290,12 +301,17 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
 
                   // Sort items by date in descending order (newest first)
                   filteredItems.sort((a, b) {
-                    final dateA = DateTime.tryParse(a['date'] ?? '');
-                    final dateB = DateTime.tryParse(b['date'] ?? '');
+                    final timestampA = a['createdAt']; // Firestore Timestamp
+                    final timestampB = b['createdAt']; // Firestore Timestamp
                     
-                    if (dateA == null || dateB == null) return 0;
+                    if (timestampA == null || timestampB == null) return 0;
+                    
+                    final dateA = timestampA.toDate(); // Convert Firestore Timestamp to DateTime
+                    final dateB = timestampB.toDate(); // Convert Firestore Timestamp to DateTime
+                    
                     return dateB.compareTo(dateA); // Sort in descending order
                   });
+
 
                   return ListView.builder(
                     itemCount: filteredItems.length,
@@ -339,7 +355,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                                         ),
                                       ),
                                       Text(
-                                        calculatePostAge(data['date'] ?? ''),
+                                        calculatePostAge(data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate().toIso8601String() : ''),  // Use createdAt here
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.black54,
@@ -455,22 +471,25 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
   }
 }
 
-String calculatePostAge(String postDate) {
-  try {
-    final postDateTime = DateTime.parse(postDate);
-    final now = DateTime.now();
-    final difference = now.difference(postDateTime);
+String calculatePostAge(String timestampString) {
+  if (timestampString.isEmpty) {
+    return 'Unknown';  // Handle empty or invalid date string.
+  }
 
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day(s) ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour(s) ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute(s) ago';
+  try {
+    // Parse the timestamp string into a DateTime object.
+    DateTime postDate = DateTime.parse(timestampString);
+    Duration age = DateTime.now().difference(postDate);
+
+    // Calculate the age in days, months, or years based on the difference.
+    if (age.inDays < 30) {
+      return '${age.inDays} day(s) ago';
+    } else if (age.inDays < 365) {
+      return '${(age.inDays / 30).floor()} month(s) ago';
     } else {
-      return 'Just now';
+      return '${(age.inDays / 365).floor()} year(s) ago';
     }
   } catch (e) {
-    return 'Unknown time';
+    return 'Invalid date';
   }
 }

@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/screens/admin/admin_dashboard.dart'; // Admin Dashboard screen
 import 'package:utmlostnfound/screens/admin/admin_profile.dart';
+import 'package:utmlostnfound/screens/admin/admin_stats.dart';
 import 'package:utmlostnfound/screens/admin/appointment.dart'; // Approval screen
 import 'package:utmlostnfound/main.dart'; // Your main app entry
 import 'package:utmlostnfound/screens/admin/view_users.dart';
@@ -99,6 +102,12 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AdminDashboard()),
+                );
+              }),
+              _buildMenuItem(context, 'Statistics', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminStatistics()),
                 );
               }),
               _buildMenuItem(context, 'Appointments', () {

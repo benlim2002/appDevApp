@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field, library_private_types_in_public_api, use_build_context_synchronously
+
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   String? _selectedFaculty;
   String? _postType = 'Lost'; // Default value for Post Type
 
+  // ignore: duplicate_ignore
+  // ignore: unused_field
   File? _imageFile;
   String? _photoUrl;
   String? _userId;

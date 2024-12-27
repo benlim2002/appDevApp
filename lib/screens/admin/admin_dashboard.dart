@@ -1,13 +1,17 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:utmlostnfound/screens/admin/admin_appbar.dart'; // Import AdminAppBar
+// ignore: unused_import
 import 'package:utmlostnfound/aptScreen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AdminDashboardState createState() => _AdminDashboardState();
 }
 
@@ -24,7 +28,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   DocumentSnapshot? lastDocument;
   List<DocumentSnapshot> allItems = [];
   List<DocumentSnapshot> filteredItems = []; // List for filtered items
-  String currentFilter = 'Found'; // Default to 'all'
+  String currentFilter = 'Found'; 
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
 
@@ -32,7 +36,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _loadDashboardMetrics();
-    _loadMoreItems();  // Load the first batch of items immediately
+    _loadMoreItems();  
   }
 
   void _showVerificationDialog(String itemId, String verificationStatus) {
@@ -48,16 +52,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
           if (verificationStatus == "no") ...[
             TextButton(
               onPressed: () {
-                // Verify the item by changing the verification status to "yes"
                 _updateItemVerificationStatus(itemId, "yes");
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text('Verify'),
             ),
           ],
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
+              Navigator.of(context).pop();
             },
             child: const Text('Cancel'),
           ),
@@ -69,7 +72,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
 Future<void> _updateItemVerificationStatus(String itemId, String verificationStatus) async {
   try {
-    // Update the 'verification' field in Firestore to 'yes'
+
     await FirebaseFirestore.instance
         .collection('items')
         .doc(itemId)
@@ -92,7 +95,6 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
       const SnackBar(content: Text('Item has been verified')),
     );
   } catch (error) {
-    print('Error updating verification status: $error');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Error verifying the item')),
     );
@@ -156,7 +158,6 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
         SnackBar(content: Text('Post type updated to $newPostType')),
       );
     } catch (error) {
-      print('Error updating postType: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error updating post type')),
       );
@@ -188,7 +189,6 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
         isLoading = false;
       });
     } catch (error) {
-      print('Error loading metrics: $error');
       setState(() {
         isLoading = false;
       });
@@ -426,7 +426,7 @@ Future<void> _updateItemVerificationStatus(String itemId, String verificationSta
               Text('Description: ${item['description'] ?? "No description"}'),
               if (item['postType'] == 'Found') ...[
                 // Show verification status if the item is found
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(

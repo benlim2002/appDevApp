@@ -220,14 +220,14 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                 ),
                                 child: const Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.verified,
                                       color: Colors.green,
                                     ),
-                                    const SizedBox(width: 27),
+                                    SizedBox(width: 27),
                                     Text(
                                       "This item is ready for retrieval.",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.green,
                                         fontWeight: FontWeight.bold,

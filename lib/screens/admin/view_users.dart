@@ -149,6 +149,7 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
                   stream: _firestore
                       .collection('users')
                       .where('role', isEqualTo: getFirestoreRole(_selectedRole)) // Filter by role
+                      .orderBy('name') // Order by name
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -171,6 +172,13 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
                           return name.toLowerCase().contains(_searchQuery); // Filter by search query
                         })
                         .toList();
+
+                    // Sort the filtered users alphabetically
+                    users.sort((a, b) {
+                      final nameA = (a.data() as Map<String, dynamic>)['name'] ?? '';
+                      final nameB = (b.data() as Map<String, dynamic>)['name'] ?? '';
+                      return nameA.compareTo(nameB);
+                    });
 
                     return ListView.builder(
                       itemCount: users.length,

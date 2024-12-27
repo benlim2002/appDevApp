@@ -11,6 +11,7 @@ class AddSecurityPersonnelScreen extends StatefulWidget {
   const AddSecurityPersonnelScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AddSecurityPersonnelScreenState createState() =>
       _AddSecurityPersonnelScreenState();
 }
@@ -25,6 +26,7 @@ class _AddSecurityPersonnelScreenState
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _photoUrlController = TextEditingController();
+  // ignore: unused_field
   final bool _isPasswordObscure = true;
 
   File? _imageFile;
@@ -58,6 +60,7 @@ class _AddSecurityPersonnelScreenState
             _photoUrl = jsonResponse['secure_url'];
           });
 
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Photo uploaded successfully!')),
           );
@@ -65,11 +68,13 @@ class _AddSecurityPersonnelScreenState
           throw Exception('Failed to upload photo to Cloudinary');
         }
       } catch (e) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to upload photo: $e')),
         );
       }
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No photo selected!')),
       );
@@ -103,6 +108,7 @@ class _AddSecurityPersonnelScreenState
           'created_at': FieldValue.serverTimestamp(),
         });
 
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Security personnel added successfully!")),
         );
