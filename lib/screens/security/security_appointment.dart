@@ -90,22 +90,78 @@ class _SecurityAppointmentScreenState extends State<SecurityAppointmentScreen> {
                 final item = items[index];
                 final data = item.data() as Map<String, dynamic>;
 
+                // Fetch aptMadeBy and phone number
                 final aptMadeBy = data['aptMadeBy'] ?? 'Unknown Appointment Maker';
-                final phoneNumber = data['userPhone'] ?? 'None';
+                final phoneNumber = data['userPhone'] ?? 'None'; // Access the phone field
 
                 return Card(
-                  margin: const EdgeInsets.all(10),
-                  child: ListTile(
-                    title: Text(aptMadeBy),
-                    subtitle: Text('Phone: $phoneNumber\n${data['description'] ?? 'No description'}'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.check_circle),
-                      onPressed: () {
-                        _showConfirmAppointmentDialog(context, item);
-                      },
-                    ),
+                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 5,
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Retriever: $aptMadeBy',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.brown,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Phone: $phoneNumber',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        data['item'] ?? 'No description',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.center,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // Show the dialog to confirm the appointment
+                            _showConfirmAppointmentDialog(context, item);
+                          },
+                          icon: const Icon(Icons.check_circle),
+                          label: const Text('Confirm Appointment'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                );
+                ),
+              );
               },
             );
           },

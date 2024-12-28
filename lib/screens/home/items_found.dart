@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -39,13 +41,6 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     });
   }
 
-  void _launchURL(String url) async {
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
 
   void _showFilterDialog() {
     showDialog(
@@ -481,13 +476,13 @@ String calculatePostAge(String timestampString) {
     DateTime postDate = DateTime.parse(timestampString);
     Duration age = DateTime.now().difference(postDate);
 
-    // Calculate the age in days, months, or years based on the difference.
-    if (age.inDays < 30) {
+    // Calculate the age in days, hours, or minutes based on the difference.
+    if (age.inDays > 0) {
       return '${age.inDays} day(s) ago';
-    } else if (age.inDays < 365) {
-      return '${(age.inDays / 30).floor()} month(s) ago';
+    } else if (age.inHours > 0) {
+      return '${age.inHours} hour(s) ago';
     } else {
-      return '${(age.inDays / 365).floor()} year(s) ago';
+      return '${age.inMinutes} minute(s) ago';
     }
   } catch (e) {
     return 'Invalid date';

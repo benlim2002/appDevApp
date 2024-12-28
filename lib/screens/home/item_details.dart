@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,21 +12,51 @@ class ItemDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> item;
 
   const ItemDetailsScreen({super.key, required this.item});
+  
 
   @override
   // ignore: library_private_types_in_public_api
   _ItemDetailsScreenState createState() => _ItemDetailsScreenState();
 }
 
+
+
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   late Map<String, dynamic> item;
   late String userName;
   late String userPhone;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+
+  bool isGuest = true; // Assume the user is a guest for this example
 
   @override
   void initState() {
     super.initState();
     item = widget.item; // Initialize the item state
+    _checkIfUserIsGuest();
+  }
+
+  Future<void> _checkIfUserIsGuest() async {
+    final userFirstName = await getUserFirstName();
+    setState(() {
+      isGuest = userFirstName == 'Guest';
+    });
+  }
+
+  Future<String> getUserFirstName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch the user's first name from Firestore
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        return userDoc.data()?['name'] ?? 'User';
+      } else {
+        return 'User';
+      }
+    } else {
+      return 'Guest';
+    }
   }
 
   String _formatTimestamp(String timestampString) {
@@ -59,28 +91,56 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   }
 
   // Function to show confirmation dialog and update the status if confirmed
-  void _showConfirmationDialog() {
+ void _showConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Confirm Appointment"),
-          content: const Text("Are you sure you want to make an appointment for retrieval?"),
+          content: isGuest
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                    ),
+                    TextField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(labelText: 'Phone Number'),
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ],
+                )
+              : const Text('Do you want to confirm the appointment?'),
           actions: <Widget>[
-            // Cancel Button
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); 
+                Navigator.of(context).pop();
               },
-              child: const Text("Cancel"),
+              child: const Text('Cancel'),
             ),
-            // Confirm Button
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); 
-                _updateStatusToTBD(); 
+              onPressed: () async {
+                if (isGuest) {
+                  if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter your name and phone number')),
+                    );
+                    return;
+                  }
+                  // Save the guest's name and phone number
+                  userName = _nameController.text;
+                  userPhone = _phoneController.text;
+                  print('Guest Name: $userName');
+                  print('Guest Phone: $userPhone');
+                }
+ 
+
+                Navigator.of(context).pop();
+                await _updateStatusToTBD();
               },
-              child: const Text("Confirm"),
+              child: const Text('Confirm'),
             ),
           ],
         );
@@ -99,7 +159,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       // Check if the document exists
       if (!docSnapshot.exists) {
-        // ignore: use_build_context_synchronously
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Item not found in Firestore.")),
         );
@@ -128,12 +188,25 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       });
 
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Item status updated to TBD and appointment recorded.")),
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Appointment Recorded"),
+            content: const Text("Please wait for appointment date confirmation."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
       );
     } catch (e) {
       // Handle any errors that occur during the update
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error updating the status: $e")),
       );
@@ -237,7 +310,33 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                            ],
+                            ]else
+                             Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(255, 245, 232, 232), 
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color.fromARGB(255, 196, 80, 80)), 
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.unarchive,
+                                      color: Color.fromARGB(255, 202, 71, 71),
+                                    ),
+                                    SizedBox(width: 27),
+                                    Text(
+                                      "Not received by UTM Security yet.",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color.fromARGB(255, 238, 154, 148),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
 
                             // Item Title
                             Text(
@@ -339,26 +438,28 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                             const SizedBox(height: 20),
 
                             // Polis Bantuan Retrieval Button
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: _showConfirmationDialog, // Show confirmation dialog
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF4CAF50), // Light green
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 15,
-                                    horizontal: 50,
+                            if (item['verification'] == 'yes') ...[
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: _showConfirmationDialog, // Show confirmation dialog
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF4CAF50), // Light green
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                      horizontal: 50,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                                  child: const Text(
+                                    "Polis Bantuan (Retrieval)",
+                                    style: TextStyle(fontSize: 16),
                                   ),
-                                ),
-                                child: const Text(
-                                  "Polis Bantuan (Retrieval)",
-                                  style: TextStyle(fontSize: 16),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

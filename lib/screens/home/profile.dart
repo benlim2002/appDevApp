@@ -40,8 +40,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isOldPasswordObscure = true;
   bool _isNewPasswordObscure = true;
   bool _isConfirmNewPasswordObscure = true;
+  // ignore: unused_field
+  bool _isLoading = false;
+  // ignore: unused_field
+  String? _errorMessage;
 
   final ImagePicker _picker = ImagePicker();
+  // ignore: unused_field
   File? _image;
 
 @override
@@ -105,49 +110,59 @@ void _showAlertDialog() {
   }
 
   // Update profile information
-  Future<void> _updateProfile() async {
-    try {
-      await _firestore.collection('users').doc(_user!.uid).update({
-        'name': _nameController.text,
-        'phone': _phoneController.text,
-        'faculty': _selectedFaculty,
-      });
-      
-      
-      final oldPassword = _oldPasswordController.text;
-      final newPassword = _newPasswordController.text;
-      final confirmNewPassword = _confirmNewPasswordController.text;
+  Future<void> _updateUserProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-      if (newPassword != confirmNewPassword) {
-        _showErrorDialog("New passwords do not match.");
-        return;
-      }
-
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
       try {
-        final cred = EmailAuthProvider.credential(
-          email: _user!.email!,
-          password: oldPassword,
-        );
-        await _user!.reauthenticateWithCredential(cred);
-        await _user!.updatePassword(newPassword);
-        _showSuccessDialog("Password updated successfully.");
+        // Update user profile in Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'name': _nameController.text,
+          'phone': _phoneController.text,
+          'faculty': _selectedFaculty,
+        });
+
+        // Check if password fields are filled
+        final oldPassword = _oldPasswordController.text;
+        final newPassword = _newPasswordController.text;
+        final confirmNewPassword = _confirmNewPasswordController.text;
+
+        if (newPassword.isNotEmpty || confirmNewPassword.isNotEmpty) {
+          if (newPassword != confirmNewPassword) {
+            _showErrorDialog("New passwords do not match.");
+            return;
+          }
+
+          // Reauthenticate and update password
+          final cred = EmailAuthProvider.credential(
+            email: user.email!,
+            password: oldPassword,
+          );
+          await user.reauthenticateWithCredential(cred);
+          await user.updatePassword(newPassword);
+          _showSuccessDialog("Password updated successfully.");
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile updated successfully')),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          _errorMessage = e.message;
+        });
       } catch (e) {
-        _showErrorDialog("Error: ${e.toString()}");
+        setState(() {
+          _errorMessage = 'An unexpected error occurred. Please try again.';
+        });
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
-
-      setState(() {
-        _name = _nameController.text;
-        _phone = _phoneController.text;
-        _faculty = _selectedFaculty;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully!')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update profile: $e')),
-      );
     }
   }
 
@@ -350,7 +365,7 @@ Future<void> _pickImage() async {
                       child: SizedBox(
                         width: 300,
                         child: ElevatedButton(
-                          onPressed: _updateProfile,
+                          onPressed: _updateUserProfile,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFD5EAE8),
                             padding: const EdgeInsets.symmetric(horizontal: 30),

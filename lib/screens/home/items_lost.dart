@@ -266,6 +266,7 @@ class _ItemsLostScreenState extends State<LostItemsScreen> {
                 stream: FirebaseFirestore.instance
                     .collection('items')
                     .where('postType', isEqualTo: 'Lost')
+                    .orderBy('date', descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -451,22 +452,25 @@ class _ItemsLostScreenState extends State<LostItemsScreen> {
   }
 }
 
-String calculatePostAge(String postDate) {
-  try {
-    final postDateTime = DateTime.parse(postDate);
-    final now = DateTime.now();
-    final difference = now.difference(postDateTime);
+String calculatePostAge(String timestampString) {
+  if (timestampString.isEmpty) {
+    return 'Unknown';  // Handle empty or invalid date string.
+  }
 
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day(s) ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour(s) ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute(s) ago';
+  try {
+    // Parse the timestamp string into a DateTime object.
+    DateTime postDate = DateTime.parse(timestampString);
+    Duration age = DateTime.now().difference(postDate);
+
+    // Calculate the age in days, hours, or minutes based on the difference.
+    if (age.inDays > 0) {
+      return '${age.inDays} day(s) ago';
+    } else if (age.inHours > 0) {
+      return '${age.inHours} hour(s) ago';
     } else {
-      return 'Just now';
+      return '${age.inMinutes} minute(s) ago';
     }
   } catch (e) {
-    return 'Unknown time';
+    return 'Invalid date';
   }
 }

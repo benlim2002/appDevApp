@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:uuid/uuid.dart'; // Import uuid package
-import 'package:dropdown_search/dropdown_search.dart';
 
 class ReportLostItemScreen extends StatefulWidget {
   const ReportLostItemScreen({super.key});
@@ -221,38 +220,38 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                       keyboardType: TextInputType.phone,
                     ),
                     _buildField("Location", "Enter location", _locationController),
-                    const Text('Area', style: TextStyle(fontSize: 16)),
+                    const Text('Faculty', style: TextStyle(fontSize: 16)),
                     Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: DropdownButtonFormField<String>(
                         isExpanded: true,
                         value: _selectedFaculty,
                         items: [
-                          'Faculty of Computing', 
-                          'Faculty of Civil Engineering', 
-                          'Faculty of Mechanical Engineering', 
-                          'Faculty of Electrical Engineering', 
-                          'Faculty of Chemical and Energy Engineering', 
-                          'Faculty of Science', 
-                          'Faculty of Built Environment and Surveying ', 
-                          'Faculty of Management',
-                          'Faculty of Social Sciences and Humanities',
-                          'Kolej Tun Fatimah',
-                          'Kolej Tun Razak',
-                          'Kolej Perdana',
-                          'Kolej 9 & 10',
-                          'Kolej Datin Seri Endon',
-                          'Kolej Dato Onn Jaafar',
-                          'Kolej Tun Hussien Onn',
-                          'Kolej Tuanku Canselor',
-                          'Kolej Rahman Putra',
-                          'Arked Meranti',
-                          'Arked Cengal',
-                          'Arked Angkasa',
-                          'Arked Kolej 13',
-                          'Arked Kolej 9 & 10',
-                          'Arked Bangunan Persatuan Pelajar',
-                          'Arked Kolej Perdana'
+                              'Faculty of Computing', 
+                              'Faculty of Civil Engineering', 
+                              'Faculty of Mechanical Engineering', 
+                              'Faculty of Electrical Engineering', 
+                              'Faculty of Chemical and Energy Engineering', 
+                              'Faculty of Science', 
+                              'Faculty of Built Environment and Surveying ', 
+                              'Faculty of Management',
+                              'Faculty of Social Sciences and Humanities',
+                              'Kolej Tun Fatimah',
+                              'Kolej Tun Razak',
+                              'Kolej Perdana',
+                              'Kolej 9 & 10',
+                              'Kolej Datin Seri Endon',
+                              'Kolej Dato Onn Jaafar',
+                              'Kolej Tun Hussien Onn',
+                              'Kolej Tuanku Canselor',
+                              'Kolej Rahman Putra',
+                              'Arked Meranti',
+                              'Arked Cengal',
+                              'Arked Angkasa',
+                              'Arked Kolej 13',
+                              'Arked Kolej 9 & 10',
+                              'Arked Bangunan Persatuan Pelajar',
+                              'Arked Kolej Perdana'
                         ].map((faculty) => DropdownMenuItem(
                           value: faculty,
                           child: Text(faculty),

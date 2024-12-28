@@ -2,10 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:utmlostnfound/screens/home/profile.dart';  // Import ProfileScreen here
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:utmlostnfound/screens/home/profile.dart';
+import 'package:utmlostnfound/screens/home/certificates.dart';
+import 'package:utmlostnfound/screens/home/appointments.dart'; 
 import 'package:utmlostnfound/main.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onTitleTap;  // Make onTitleTap nullable and optional
 
@@ -14,6 +17,34 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.onTitleTap, // Make it optional with a nullable type
   });
+
+  @override
+  _CustomAppBarState createState() => _CustomAppBarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  String? userRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+      if (userDoc.exists) {
+        setState(() {
+          userRole = userDoc.data()?['role'];
+        });
+      }
+    }
+  }
 
   Future<void> _handleLogout(BuildContext context) async {
     final bool? logoutConfirmed = await showDialog<bool>(
@@ -69,10 +100,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           );
         }
         break;
-      case 'settings':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Navigating to Settings")),
-        );
+      case 'appointments':
+        Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AppointmentsScreen()),
+          );
+        break;
+      case 'certificates':
+        Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CertificatesScreen()),
+          );
         break;
       case 'logout':
         _handleLogout(context);
@@ -104,9 +142,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       title: GestureDetector(
-        onTap: onTitleTap, // Only trigger onTap if onTitleTap is provided
+        onTap: widget.onTitleTap, // Only trigger onTap if onTitleTap is provided
         child: Text(
-          title,
+          widget.title,
           style: textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w900,
             fontSize: 26,
@@ -120,7 +158,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onSelected: (value) => _onMenuSelected(context, value),
           itemBuilder: (BuildContext context) {
             return [
-              if (isUserSignedIn) ...[
+              if (isUserSignedIn && userRole != 'guest') ...[
                 PopupMenuItem(
                   value: 'profile',
                   child: Text(
@@ -128,26 +166,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     style: textTheme.bodyMedium,
                   ),
                 ),
-              ] else ...[
-                PopupMenuItem(
-                  value: 'profile',
-                  child: GestureDetector(
-                    onTap: () {
-                      _showSignInDialog(context);  // Show dialog for profile
-                    },
-                    child: Text(
-                      "Profile (Sign In Required)",
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey,  // Inactive text color
-                      ),
-                    ),
-                  ),
-                ),
               ],
               PopupMenuItem(
-                value: 'settings',
+                value: 'appointments',
                 child: Text(
-                  "Settings",
+                  "Appointments",
+                  style: textTheme.bodyMedium,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'certificates',
+                child: Text(
+                  "Certificates",
                   style: textTheme.bodyMedium,
                 ),
               ),
@@ -173,7 +203,4 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

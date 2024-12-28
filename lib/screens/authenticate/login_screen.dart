@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, avoid_print
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _guestNameController = TextEditingController();
+  final TextEditingController _guestPhoneController = TextEditingController();
   bool _isObscure = true;
   String? _errorMessage;
   String? _successMessage;
@@ -123,21 +125,108 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _signInAnonymously() async {
-    try {
-      User? user = await _authService.signInAnon();
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
+  void _showGuestInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Enter Your Details"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: TextField(
+                  controller: _guestNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    labelStyle: TextStyle(
+                      color: Colors.brown[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: TextField(
+                  controller: _guestPhoneController,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    labelStyle: TextStyle(
+                      color: Colors.brown[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (_guestNameController.text.isEmpty || _guestPhoneController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter your name and phone number')),
+                  );
+                  return;
+                }
+                // Save the guest's name and phone number
+                String guestName = _guestNameController.text;
+                String guestPhone = _guestPhoneController.text;
+                print('Guest Name: $guestName');
+                print('Guest Phone: $guestPhone');
+
+                Navigator.of(context).pop();
+                await _signInAnonymously(guestName, guestPhone);
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
         );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    }
+      },
+    );
   }
+
+Future<void> _signInAnonymously(String guestName, String guestPhone) async {
+  try {
+    User? user = await _authService.signInAnon();
+    if (user != null) {
+      // Save guest details to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'name': guestName,
+        'phone': guestPhone,
+        'role': 'guest',
+      });
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LostAndFoundScreen()),
+      );
+    }
+  } catch (e) {
+    setState(() {
+      _errorMessage = e.toString();
+    });
+  }
+}
 
   // Method to handle Forgot Password functionality
   Future<void> _forgotPassword() async {
@@ -367,7 +456,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Anonymous Sign-In Button
                       Center(
                         child: ElevatedButton(
-                          onPressed: _signInAnonymously,
+                          onPressed: _showGuestInfoDialog,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[400],
                             padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -403,18 +403,32 @@ class _AdminStatisticsState extends State<SecurityStatistics> {
       pdf.addPage(
         pw.Page(
           build: (pw.Context context) {
+            // Extract and sort the data by date
+            final data = snapshot.docs.map((doc) {
+              Timestamp createdAtTimestamp = doc['createdAt'];
+              DateTime createdAtDate = createdAtTimestamp.toDate();
+              String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
+              String item = doc['item'] ?? 'Unknown Item';
+              return [dateKey, item];
+            }).toList();
+
+            // Sort the data by date
+            data.sort((a, b) => a[0].compareTo(b[0]));
+
+            // Add item number to the data
+            final numberedData = data.asMap().entries.map((entry) {
+              int index = entry.key + 1; // Start numbering from 1
+              List<String> row = entry.value;
+              return [index.toString(), ...row];
+            }).toList();
+
             return pw.Column(
               children: [
-                pw.Text('Lost Items Report', style: const pw.TextStyle(fontSize: 24)),
+                pw.Text('Total Items Report', style: const pw.TextStyle(fontSize: 24)),
                 pw.SizedBox(height: 16),
                 pw.Table.fromTextArray(
-                  headers: ['Date', 'Count'],
-                  data: snapshot.docs.map((doc) {
-                    Timestamp createdAtTimestamp = doc['createdAt'];
-                    DateTime createdAtDate = createdAtTimestamp.toDate();
-                    String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
-                    return [dateKey, '1']; // Assuming each document represents one lost item
-                  }).toList(),
+                  headers: ['No', 'Date', 'Item'],
+                  data: numberedData,
                 ),
               ],
             );
@@ -526,10 +540,6 @@ class _AdminStatisticsState extends State<SecurityStatistics> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed: _exportToCSV,
-                              child: const Text('Export to CSV'),
-                            ),
                             const SizedBox(width: 16),
                             ElevatedButton(
                               onPressed: _exportToPDF,

@@ -391,7 +391,7 @@ class _AdminStatisticsState extends State<AdminStatistics> {
   }
 
   // Export data to PDF
-  Future<void> _exportToPDF() async {
+  Future<void> _exportToPDF(DateTime selectedDate) async {
     try {
       // Fetch all items data from Firestore
       QuerySnapshot snapshot = await _firestore.collection('items').get();
@@ -400,23 +400,110 @@ class _AdminStatisticsState extends State<AdminStatistics> {
       final pdf = pw.Document();
 
       pdf.addPage(
-        pw.Page(
-          build: (pw.Context context) {
+      pw.Page(
+        build: (pw.Context context) {
+          // Extract and sort the data by date
+          final data = snapshot.docs.map((doc) {
+            Timestamp createdAtTimestamp = doc['createdAt'];
+            DateTime createdAtDate = createdAtTimestamp.toDate();
+            String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
+            String item = doc['item'] ?? 'Unknown Item';
+            return [dateKey, item];
+          }).toList();
+
+          // Sort the data by date
+          data.sort((a, b) => a[0].compareTo(b[0]));
+
+          // Add item number to the data
+          final numberedData = data.asMap().entries.map((entry) {
+            int index = entry.key + 1; // Start numbering from 1
+            List<String> row = entry.value;
+          return [index.toString(), ...row];
+          }).toList();
+
+          // Conditionally generate PDF content based on graph type
+          if (currentGraph == 'Faculty') {
+            // Group items by faculty
+            final facultyGroups = <String, List<String>>{};
+            for (var doc in snapshot.docs) {
+              String faculty = doc['faculty'] ?? 'Unknown Faculty';
+              String item = doc['item'] ?? 'Unknown Item';
+              if (!facultyGroups.containsKey(faculty)) {
+                facultyGroups[faculty] = [];
+              }
+              facultyGroups[faculty]!.add(item);
+            }
+
+            // Prepare data for the table
+            final facultyData = facultyGroups.entries.map((entry) {
+              String faculty = entry.key;
+              int count = entry.value.length;
+              return [faculty, count.toString(), entry.value.join(', ')];
+            }).toList();
+
+            // Add item number to the data
+            final numberedFacultyData = facultyData.asMap().entries.map((entry) {
+            int index = entry.key + 1; // Start numbering from 1
+            List<String> row = entry.value;
+            return [index.toString(), ...row];
+            }).toList();
+
             return pw.Column(
               children: [
-                pw.Text('Lost Items Report', style: const pw.TextStyle(fontSize: 24)),
+                pw.Text('Total Items by Faculty', style: const pw.TextStyle(fontSize: 24)),
                 pw.SizedBox(height: 16),
                 pw.Table.fromTextArray(
-                  headers: ['Date', 'Count'],
-                  data: snapshot.docs.map((doc) {
-                    Timestamp createdAtTimestamp = doc['createdAt'];
-                    DateTime createdAtDate = createdAtTimestamp.toDate();
-                    String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
-                    return [dateKey, '1']; // Assuming each document represents one lost item
+                  headers: ['No', 'Faculty', 'Count', 'Items'],
+                  data: numberedFacultyData.map((row) {
+                    // Join items with newline character
+                    row[3] = row[3].split(', ').join('\n');
+                    return row;
                   }).toList(),
                 ),
               ],
             );
+            } else if (currentGraph == 'Month') {
+              // Filter items by the specified month
+              DateTime startOfMonth = DateTime(selectedDate.year, selectedDate.month, 1);
+              DateTime endOfMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0);
+
+              final monthData = snapshot.docs.where((doc) {
+                Timestamp createdAtTimestamp = doc['createdAt'];
+                DateTime createdAtDate = createdAtTimestamp.toDate();
+                return createdAtDate.isAfter(startOfMonth) && createdAtDate.isBefore(endOfMonth);
+              }).map((doc) {
+                Timestamp createdAtTimestamp = doc['createdAt'];
+                DateTime createdAtDate = createdAtTimestamp.toDate();
+                String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
+                String item = doc['item'] ?? 'Unknown Item';
+                return [dateKey, item];
+              }).toList();
+
+              // Sort the data by date
+              monthData.sort((a, b) => a[0].compareTo(b[0]));
+
+              // Add item number to the data
+              final numberedMonthData = monthData.asMap().entries.map((entry) {
+                int index = entry.key + 1; // Start numbering from 1
+                List<String> row = entry.value;
+                return [index.toString(), ...row];
+              }).toList();
+
+              return pw.Column(
+                children: [
+                  pw.Text('Total Items - $currentPeriod', style: const pw.TextStyle(fontSize: 24)),
+                  pw.SizedBox(height: 16),
+                  pw.Table.fromTextArray(
+                    headers: ['No', 'Date', 'Item'],
+                    data: numberedMonthData,
+                  ),
+                ],
+              );
+            } else {
+              return pw.Center(
+                child: pw.Text('Unknown graph type'),
+              );
+            }
           },
         ),
       );
@@ -525,13 +612,9 @@ class _AdminStatisticsState extends State<AdminStatistics> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed: _exportToCSV,
-                              child: const Text('Export to CSV'),
-                            ),
                             const SizedBox(width: 16),
                             ElevatedButton(
-                              onPressed: _exportToPDF,
+                              onPressed: () => _exportToPDF(DateTime.now()), // Pass the current date or the selected date
                               child: const Text('Export to PDF'),
                             ),
                           ],

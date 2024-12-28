@@ -1,11 +1,20 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, unused_import
 
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import 'package:utmlostnfound/screens/security/security_appbar.dart'; // Import SecurityAppBar
 import 'package:utmlostnfound/aptScreen.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:http/http.dart' as http;
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:path_provider/path_provider.dart';
 
 class SecurityPersonnelDashboard extends StatefulWidget {
   const SecurityPersonnelDashboard({super.key});
@@ -16,11 +25,12 @@ class SecurityPersonnelDashboard extends StatefulWidget {
 }
 
 class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   int totalItems = 0;
   int itemsFound = 0;
   int itemsLost = 0;
+  int itemsCollected = 0;
   int itemsApproved = 0;
 
   bool isLoading = true;
@@ -28,15 +38,29 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
   DocumentSnapshot? lastDocument;
   List<DocumentSnapshot> allItems = [];
   List<DocumentSnapshot> filteredItems = []; // List for filtered items
-  String currentFilter = 'Found'; // Default to 'all'
+  String currentFilter = 'Found';
+  String? selectedLocation; // Define selectedLocation
+  DateTimeRange? selectedDateRange; // Define selectedDateRange
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
+
+  final List<String> locations = [
+    'Faculty of Computing',
+    'Faculty of Civil Engineering',
+    'Faculty of Mechanical Engineering',
+    'Faculty of Electrical Engineering',
+    'Faculty of Chemical and Energy Engineering',
+    'Faculty of Science',
+    'Faculty of Built Environment and Surveying',
+    'Faculty of Management',
+    'Faculty of Social Sciences and Humanities'
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadDashboardMetrics();
-    _loadMoreItems();  // Load the first batch of items immediately
+    _loadMoreItems();  
   }
 
   void _showVerificationDialog(String itemId, String verificationStatus) {
@@ -44,7 +68,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Verify Item Recieved'),
+          title: const Text('Verify Item Received'),
           content: verificationStatus == "no"
               ? const Text('Do you want to verify that this item has been secured?')
               : const Text('This item is already verified.'),
@@ -52,7 +76,6 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
             if (verificationStatus == "no") ...[
               TextButton(
                 onPressed: () {
-                  // Verify the item by changing the verification status to "yes"
                   _updateItemVerificationStatus(itemId, "yes");
                   Navigator.of(context).pop();
                 },
@@ -71,49 +94,223 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     );
   }
 
-
   Future<void> _updateItemVerificationStatus(String itemId, String verificationStatus) async {
-  try {
-    // Update the 'verification' field in Firestore to 'yes'
-    await FirebaseFirestore.instance
-        .collection('items')
-        .doc(itemId)
-        .update({
-      'verification': verificationStatus, // Mark the item as verified
-    });
+    try {
 
-    // Optionally, update the local list of items to reflect the change
-    setState(() {
-      allItems = allItems.map((item) {
-        if (item['id'] == itemId) {
-          item['verification'] == verificationStatus;  // Corrected this part to update correctly
-        }
-        return item;
-      }).toList();
-    });
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(itemId)
+          .update({
+        'verification': verificationStatus, // Mark the item as verified
+      });
 
-    if (verificationStatus == 'yes') {
-      AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: 100, 
-          channelKey: 'basic_channel',
-          title: 'Item Verified',
-          body: 'The item you posted has been verified as secured.',
-          notificationLayout: NotificationLayout.Default,
-        ),
+      // Optionally, update the local list of items to reflect the change
+      setState(() {
+        allItems = allItems.map((item) {
+          if (item['id'] == itemId) {
+            item['verification'] == verificationStatus;  // Update verification status
+          }
+          return item;
+        }).toList();
+      });
+
+      // Show a confirmation message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item has been verified')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error verifying the item')),
       );
     }
+  }
+
+  Future<void> _markAsCollected(String itemId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(itemId)
+          .update({'collectionStatus': 'collected'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Collection confirmed')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error confirming collection: $error')),
+      );
+    }
+  }
 
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Item has been verified')),
+  Future<Uint8List> _generateCertificate(String finderName, String date, String item, String aptMadeBy ) async {
+    
+    final ByteData bytes = await rootBundle.load('assets/home.png'); // Path to your asset
+    final Uint8List imageData = bytes.buffer.asUint8List();
+    
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Center(
+          child: pw.Column(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              pw.Image(
+                pw.MemoryImage(imageData),
+                height: 200, // Adjust height
+                width: 200,  // Adjust width
+              ),
+              pw.SizedBox(height: 30),
+              pw.Text(
+                'Certificate of Appreciation',
+                style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(
+                'This certificate is awarded to',
+                style: const pw.TextStyle(fontSize: 16),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                finderName,
+                style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(
+                'For their honesty and contribution to the UTM Lost & Found community',
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(fontSize: 14),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(
+                'on reporting and handing in the lost item of $item on $date that belonged to $aptMadeBy.',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 30),
+              pw.Text(
+                'UTM Lost & Found Team',
+                style: pw.TextStyle(fontSize: 12, fontStyle: pw.FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-  } catch (error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error verifying the item')),
-    );
+
+    // Show the generated PDF
+    final pdfBytes = await pdf.save();
+
+    return pdfBytes;
+
+  }
+
+
+  Future<void> _uploadPdfToCloudinary(Uint8List pdfBytes, String finderName, String item) async {
+    try {
+      // Cloudinary API details
+      String cloudinaryUrl = "https://api.cloudinary.com/v1_1/dqqb4c714/raw/upload";
+      String uploadPreset = "pdf_upload";
+
+      // Convert PDF bytes to base64
+      String base64Pdf = base64Encode(pdfBytes);
+
+      // Create multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(cloudinaryUrl));
+      request.fields['file'] = 'data:application/pdf;base64,$base64Pdf';
+      request.fields['upload_preset'] = uploadPreset;
+      request.fields['timestamp'] = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Send request
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseData = await response.stream.bytesToString();
+        var jsonResponse = json.decode(responseData);
+        String downloadUrl = jsonResponse['secure_url'];
+        print('PDF uploaded successfully. Download URL: $downloadUrl');
+
+        // Save the PDF URL to the user's document in Firestore
+        await _savePdfUrlToFirestore(downloadUrl, finderName);
+        await _savePdfUrlToItemsCollection(downloadUrl, item, finderName);
+
+      } else {
+        print('Error uploading PDF to Cloudinary: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error uploading PDF: $e');
+    }
+  }
+
+  Future<void> _savePdfUrlToItemsCollection(String downloadUrl, String item, String finderName) async {
+  try {
+
+    print('Saving PDF URL to items collection');
+    print('Item Name: $item');
+    print('Finder Name: $finderName');
+    print('Download URL: $downloadUrl');
+
+    // Step 1: Query Firestore to get the document ID of the item with the matching item name and finder name
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('items')
+        .where('item', isEqualTo: item)
+        .where('name', isEqualTo: finderName) // Change 'finderName' if you're using a different field
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // Step 2: Extract the document ID
+      String itemDocId = querySnapshot.docs.first.id;
+      print('Found item document ID: $itemDocId');
+
+      // Step 3: Update the item's document with the certificate URL
+      await FirebaseFirestore.instance.collection('items').doc(itemDocId).update({
+        'certificateUrl': downloadUrl,
+        'updatedAt': Timestamp.now(),
+      }).then((value) {
+        print('Certificate URL added successfully to item document');
+      }).catchError((error) {
+        print('Error adding certificate URL to item document: $error');
+      });
+    } else {
+      print('No item found with the given item name and finder name');
+    }
+  } catch (e) {
+    print('Error saving PDF URL to Firestore: $e');
   }
 }
+
+  Future<void> _savePdfUrlToFirestore(String downloadUrl, String finderName) async {
+    try {
+      // Step 1: Query Firestore to get the document ID of the user with the matching finderName
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('name', isEqualTo: finderName) // Change 'name' if you're using a different field
+          .get();
+          
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Step 2: Extract the document ID
+        String userDocId = querySnapshot.docs.first.id;
+        print('Found user document ID: $userDocId');
+
+
+        // Step 3: Update the user's document with the certificate URL
+      await FirebaseFirestore.instance.collection('users').doc(userDocId).collection('certificates').add({
+        'certificateUrl': downloadUrl,
+        'createdAt': Timestamp.now(),
+      }).then((value) {
+        print('Certificate added successfully');
+      }).catchError((error) {
+        print('Error adding certificate: $error');
+      });
+      } else {
+        print('No user found with the given finderName');
+      }
+    } catch (e) {
+      print('Error saving PDF URL to Firestore: $e');
+    }
+  }
 
 
   void _showChangePostTypeDialog(String itemId, String currentPostType) {
@@ -127,7 +324,7 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
             TextButton(
               onPressed: () {
                 // Update the postType to "Found" in Firestore
-                _updatePostType(itemId, 'Found');
+                _updatePostType(itemId, 'Found', '');
                 Navigator.of(context).pop(); // Close the dialog
               },
               child: const Text('Found'),
@@ -145,21 +342,98 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     );
   }
 
-  Future<void> _updatePostType(String itemId, String newPostType) async {
+
+void _showPdf(String pdfUrl) async {
+  try {
+    // Debugging: Print the URL
+    print('PDF URL: $pdfUrl');
+
+    // Validate the URL
+    if (pdfUrl.isEmpty || !Uri.parse(pdfUrl).isAbsolute) {
+      throw 'Invalid PDF URL';
+    }
+
+    // Download the PDF file
+    final response = await http.get(Uri.parse(pdfUrl));
+    final bytes = response.bodyBytes;
+
+    // Get the temporary directory
+    final dir = await getTemporaryDirectory();
+
+    // Create a temporary file
+    final file = File('${dir.path}/temp.pdf');
+
+    // Write the PDF file to the temporary file
+    await file.writeAsBytes(bytes);
+
+    // Display the PDF
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PDFView(
+          filePath: file.path,
+        ),
+      ),
+    );
+  } catch (e) {
+    print('Error displaying PDF: $e');
+  }
+}
+
+  void _showConfirmCollectionDialog(BuildContext context, String id, String finderName, String item, String date, String aptMadeBy) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Collection'),
+          content: const Text(
+            'Generate e-certificate for the founder?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                // First, generate the certificate
+                Uint8List pdfBytes = await _generateCertificate(finderName, date, item, aptMadeBy);
+
+                // Upload the PDF to Cloudinary and update Firestore
+                await _uploadPdfToCloudinary(pdfBytes, finderName, item);
+
+                await _updatePostType(id, 'collected', ''); // Pass an empty string or the appropriate certificate URL
+
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Certificate generated and uploaded successfully')),
+                );
+              },
+              child: const Text('Confirm'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Future<void> _updatePostType(String itemId, String newPostType, String certificateUrl) async {
     try {
       // Update the postType field in Firestore
       await FirebaseFirestore.instance
-          .collection('items')  // Reference to the 'items' collection
-          .doc(itemId)  // The document ID of the item you want to update
+          .collection('items') 
+          .doc(itemId)  
           .update({
-            'postType': newPostType,  // Update the 'postType' field
+            'postType': newPostType, 
           });
 
-      // After updating the Firestore document, update the local list of items
       setState(() {
         allItems = allItems.map((item) {
           if (item['id'] == itemId) {
-            item['postType'] == newPostType;  // Update the local postType
+            item['postType'] == newPostType; 
           }
           return item;
         }).toList();
@@ -180,7 +454,6 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
   }
 
 
-  // Load metrics like total, Found, lost, and approved items
   Future<void> _loadDashboardMetrics() async {
     try {
       final totalSnapshot = await _firestore.collection('items').get();
@@ -196,12 +469,17 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
           .collection('items')
           .where('postType', isEqualTo: 'approved')
           .get();
+      final collectedSnapshot = await _firestore
+          .collection('items')
+          .where('postType', isEqualTo: 'collected')
+          .get();
 
       setState(() {
         totalItems = totalSnapshot.docs.length;
         itemsFound = foundSnapshot.docs.length;
         itemsLost = lostSnapshot.docs.length;
         itemsApproved = approvedSnapshot.docs.length;
+        itemsCollected = collectedSnapshot.docs.length;
         isLoading = false;
       });
     } catch (error) {
@@ -214,10 +492,8 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     }
   }
 
-
-  // Fetch paginated data based on the current filter (Found, lost, all, or approved)
   Future<void> _loadMoreItems() async {
-    if (isPaginating) return; // Prevent multiple calls at once
+    if (isPaginating) return;
 
     setState(() {
       isPaginating = true;
@@ -281,13 +557,112 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
 
   // Apply the search filter to the items list
   void _applySearchFilter() {
-    setState(() {
-      filteredItems = allItems.where((item) {
-        final itemName = item['item']?.toLowerCase() ?? '';
-        return itemName.contains(searchQuery.toLowerCase());
-      }).toList();
-    });
+  setState(() {
+    filteredItems = allItems.where((item) {
+      final itemName = item['item']?.toLowerCase() ?? '';
+      final itemLocation = item['faculty'] ?? '';
+      final itemDateStr = item['date'] as String?;
+      DateTime? itemDate;
+      
+      try {
+        itemDate = itemDateStr != null ? DateTime.parse(itemDateStr) : null;
+      } catch (e) {
+        print('Error parsing date: $e');
+      }
+
+      bool matchesSearch = itemName.contains(searchQuery.toLowerCase());
+      bool matchesLocation = selectedLocation == null || itemLocation == selectedLocation;
+      bool matchesDateRange = selectedDateRange == null || 
+        (itemDate != null && 
+         itemDate.isAfter(selectedDateRange!.start) && 
+         itemDate.isBefore(selectedDateRange!.end));
+      
+      return matchesSearch && matchesLocation && matchesDateRange;
+    }).toList();
+  });
+}
+
+  void _showFilterPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Filter Options'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButton<String>(
+                      isExpanded: true,
+                      hint: const Text('Select Location'),
+                      value: selectedLocation,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('All Locations'),
+                        ),
+                        ...locations.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedLocation = newValue;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final DateTimeRange? picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                          initialDateRange: selectedDateRange,
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            selectedDateRange = picked;
+                          });
+                        }
+                      },
+                      child: Text(selectedDateRange == null 
+                        ? 'Select Date Range'
+                        : '${selectedDateRange!.start.toString().substring(0, 10)} - ${selectedDateRange!.end.toString().substring(0, 10)}'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      selectedLocation = null;
+                      selectedDateRange = null;
+                    });
+                  },
+                  child: const Text('Clear Filters'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _applySearchFilter();
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -326,20 +701,35 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
                       const SizedBox(width: 16),
                       _buildFilterButton("Approved", 'approved', itemsApproved),
                       const SizedBox(width: 16),
+                      _buildFilterButton("Collected", 'collected', itemsCollected),
+                      const SizedBox(width: 16),
                       _buildFilterButton("All", 'all', totalItems),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 // Search bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  decoration: InputDecoration(
-                    labelText: 'Search by Item Name',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(18.0)),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _onSearchChanged,
+                        decoration: InputDecoration(
+                          labelText: 'Search by Item Name',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(35.0)),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Badge(
+                        isLabelVisible: selectedLocation != null || selectedDateRange != null,
+                        child: const Icon(Icons.filter_list),
+                      ),
+                      onPressed: _showFilterPopup,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Expanded(
@@ -369,9 +759,9 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
       onPressed: () {
         setState(() {
           currentFilter = filterType;
-          allItems.clear(); 
-          filteredItems.clear();
-          lastDocument = null; 
+          allItems.clear();  // Clear the previous list before loading the new items
+          filteredItems.clear(); // Clear filtered items as well
+          lastDocument = null;  // Reset pagination
         });
         _loadMoreItems(); // Reload the items based on the selected filter
       },
@@ -405,12 +795,20 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
   }
 
   Widget _buildListItem(Map<String, dynamic> item) {
-    String verificationStatus = item['verification'] ?? "no"; // Check the verification status
+  String verificationStatus = item['verification'] ?? "no"; // Check the verification status
 
-    return GestureDetector(
-      onTap: item['postType'] == 'Found' && verificationStatus == "no"
-          ? () => _showVerificationDialog(item['id'], verificationStatus)
-          : null, // Only show the dialog if the item is found and not verified
+  return GestureDetector(
+      onTap: () {
+        if (item['postType'] == 'Found' && verificationStatus == "no") {
+          _showVerificationDialog(item['id'], verificationStatus);
+        } else if (item['postType'] == 'Lost') {
+          _showChangePostTypeDialog(item['id'], item['postType']);
+        } else if (item['postType'] == 'approved') {
+          _showConfirmCollectionDialog(context, item['id'], item['name'], item['item'], item['date'] , item['aptMadeBy']);
+        }else if (item['postType'] == 'collected') {
+        _showPdf(item['certificateUrl']);
+      }
+      },
       child: Card(
         elevation: 2,
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -443,7 +841,6 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
               Text('Status: ${item['postType']}'),
               Text('Description: ${item['description'] ?? "No description"}'),
               if (item['postType'] == 'Found') ...[
-                // Show verification status if the item is found
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -466,7 +863,6 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
             ],
           ),
           isThreeLine: true,
-          onTap: item['postType'] == 'Lost' ? () => _showChangePostTypeDialog(item['id'], item['postType']) : null,
         ),
       ),
     );
