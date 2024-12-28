@@ -1,13 +1,15 @@
-// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, unused_import
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, unused_import, avoid_print
 
 import 'dart:convert';
 import 'dart:io';
+// ignore: unnecessary_import
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:utmlostnfound/screens/security/security_appbar.dart'; // Import SecurityAppBar
 import 'package:utmlostnfound/aptScreen.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -25,7 +27,7 @@ class SecurityPersonnelDashboard extends StatefulWidget {
 }
 
 class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard> {
- final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   int totalItems = 0;
   int itemsFound = 0;
@@ -45,6 +47,13 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
   String searchQuery = "";
 
   final List<String> locations = [
+    'Arked Meranti',
+    'Arked Cengal',
+    'Arked Angkasa',
+    'Arked Kolej 13',
+    'Arked Kolej 9 & 10',
+    'Arked Bangunan Persatuan Pelajar',
+    'Arked Kolej Perdana'
     'Faculty of Computing',
     'Faculty of Civil Engineering',
     'Faculty of Mechanical Engineering',
@@ -54,6 +63,16 @@ class _SecurityPersonnelDashboardState extends State<SecurityPersonnelDashboard>
     'Faculty of Built Environment and Surveying',
     'Faculty of Management',
     'Faculty of Social Sciences and Humanities'
+    'Kolej Tun Dr. Ismail',
+    'Kolej Tun Fatimah',
+    'Kolej Tun Razak',
+    'Kolej Perdana',
+    'Kolej 9 & 10',
+    'Kolej Datin Seri Endon',
+    'Kolej Dato Onn Jaafar',
+    'Kolej Tun Hussien Onn',
+    'Kolej Tuanku Canselor',
+    'Kolej Rahman Putra',
   ];
 
   @override
@@ -380,6 +399,109 @@ void _showPdf(String pdfUrl) async {
   }
 }
 
+  void _showItemDetails(BuildContext context, Map<String, dynamic> item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (BuildContext context, ScrollController scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (item['photo_url'] != null && item['photo_url'].isNotEmpty)
+                      Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16.0), // Adjust the radius as needed
+                          child: Image.network(
+                            item['photo_url'],
+                            height: 400,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    Text(
+                      item['item'] ?? 'Unknown Item',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Location: ${item['location'] ?? 'No location provided'}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Area: ${item['faculty'] ?? 'No location provided'}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Description: ${item['description'] ?? 'Unknown'}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Status: ${item['postType'] ?? 'Unknown'}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    if (item['postType'] == 'approved') ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Retrival Info:',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                      Text(
+                        'Retriever: ${item['aptMadeBy'] ?? "N/A"}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Date: ${item['aptDate'] != null ? DateFormat('yyyy-MM-dd').format((item['aptDate'] as Timestamp).toDate()) : "N/A"}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Time: ${item['aptDate'] != null ? DateFormat('HH:mm:ss').format((item['aptDate'] as Timestamp).toDate()) : "N/A"}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ],
+                    if (item['postType'] == 'collected') ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Certificate Generated to:',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                      Text(
+                        'Founder: ${item['name'] ?? "N/A"}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Contact: ${item['contact'] ?? "N/A"}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showConfirmCollectionDialog(BuildContext context, String id, String finderName, String item, String date, String aptMadeBy) {
     showDialog(
       context: context,
@@ -387,7 +509,7 @@ void _showPdf(String pdfUrl) async {
         return AlertDialog(
           title: const Text('Confirm Collection'),
           content: const Text(
-            'Generate e-certificate for the founder?',
+            'Is the retriever here for their item? Proceed to generate e-certificate for the founder?',
           ),
           actions: <Widget>[
             TextButton(
@@ -507,14 +629,14 @@ void _showPdf(String pdfUrl) async {
         querySnapshot = await _firestore
             .collection('items')
             .orderBy('date', descending: true)
-            .limit(20)
+            .limit(100)
             .get();
       } else {
         querySnapshot = await _firestore
             .collection('items')
             .where('postType', isEqualTo: filterStatus)
             .orderBy('date', descending: true)
-            .limit(20)
+            .limit(100)
             .get();
       }
     } else {
@@ -523,7 +645,7 @@ void _showPdf(String pdfUrl) async {
             .collection('items')
             .orderBy('date', descending: true)
             .startAfterDocument(lastDocument!)
-            .limit(20)
+            .limit(100)
             .get();
       } else {
         querySnapshot = await _firestore
@@ -531,7 +653,7 @@ void _showPdf(String pdfUrl) async {
             .where('postType', isEqualTo: filterStatus)
             .orderBy('date', descending: true)
             .startAfterDocument(lastDocument!)
-            .limit(20)
+            .limit(100)
             .get();
       }
     }
@@ -795,19 +917,22 @@ void _showPdf(String pdfUrl) async {
   }
 
   Widget _buildListItem(Map<String, dynamic> item) {
-  String verificationStatus = item['verification'] ?? "no"; // Check the verification status
+    String verificationStatus = item['verification'] ?? "no"; // Check the verification status
 
-  return GestureDetector(
+    return GestureDetector(
       onTap: () {
         if (item['postType'] == 'Found' && verificationStatus == "no") {
           _showVerificationDialog(item['id'], verificationStatus);
         } else if (item['postType'] == 'Lost') {
           _showChangePostTypeDialog(item['id'], item['postType']);
         } else if (item['postType'] == 'approved') {
-          _showConfirmCollectionDialog(context, item['id'], item['name'], item['item'], item['date'] , item['aptMadeBy']);
-        }else if (item['postType'] == 'collected') {
-        _showPdf(item['certificateUrl']);
-      }
+          _showConfirmCollectionDialog(context, item['id'], item['name'], item['item'], item['date'], item['aptMadeBy']);
+        } else if (item['postType'] == 'collected') {
+          _showPdf(item['certificateUrl']);
+        }
+      },
+      onLongPress: () {
+        _showItemDetails(context, item);
       },
       child: Card(
         elevation: 2,
@@ -858,6 +983,18 @@ void _showPdf(String pdfUrl) async {
                       ),
                     ),
                   ],
+                ),
+              ],
+              if (item['postType'] == 'approved') ...[
+                const SizedBox(height: 4),
+                Text('Retriever: ${item['aptMadeBy'] ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Date: ${item['aptDate'] != null ? DateFormat('yyyy-MM-dd').format((item['aptDate'] as Timestamp).toDate()) : "N/A"}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Time: ${item['aptDate'] != null ? DateFormat('HH:mm:ss').format((item['aptDate'] as Timestamp).toDate()) : "N/A"}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ],

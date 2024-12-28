@@ -1,4 +1,7 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'dart:io';
+// ignore: unused_import
 import 'package:cloudinary_url_gen/transformation/region.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,6 +15,7 @@ class CertificatesScreen extends StatefulWidget {
   const CertificatesScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CertificatesScreenState createState() => _CertificatesScreenState();
 }
 

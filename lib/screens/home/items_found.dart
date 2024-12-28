@@ -1,5 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,15 +13,22 @@ class FoundItemScreen extends StatefulWidget {
 }
 
 class _FoundItemScreenState extends State<FoundItemScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFaculty = 'All';
   DateTime? _startDate;
   DateTime? _endDate;
-  
 
   final List<String> _faculties = [
     'All',
+    'Arked Meranti',
+    'Arked Cengal',
+    'Arked Angkasa',
+    'Arked Kolej 13',
+    'Arked Kolej 9 & 10',
+    'Arked Bangunan Persatuan Pelajar',
+    'Arked Kolej Perdana',
     'Faculty of Computing',
     'Faculty of Civil Engineering',
     'Faculty of Mechanical Engineering',
@@ -32,7 +37,17 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     'Faculty of Science',
     'Faculty of Built Environment and Surveying',
     'Faculty of Management',
-    'Faculty of Social Sciences and Humanities'
+    'Faculty of Social Sciences and Humanities',
+    'Kolej Tun Dr. Ismail',
+    'Kolej Tun Fatimah',
+    'Kolej Tun Razak',
+    'Kolej Perdana',
+    'Kolej 9 & 10',
+    'Kolej Datin Seri Endon',
+    'Kolej Dato Onn Jaafar',
+    'Kolej Tun Hussien Onn',
+    'Kolej Tuanku Canselor',
+    'Kolej Rahman Putra',
   ];
 
   void _onSearch(String query) {
@@ -41,6 +56,13 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     });
   }
 
+  void _launchURL(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 
   void _showFilterDialog() {
     showDialog(
@@ -62,22 +84,21 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                     return DropdownMenuItem(
                       value: faculty,
                       child: Container(
-                        height: 50, 
+                        height: 50,
                         alignment: Alignment.centerLeft,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
                           faculty,
-                          overflow: TextOverflow.ellipsis, 
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     );
                   }).toList(),
-                  decoration: const InputDecoration(labelText: "Faculty"),
+                  decoration: const InputDecoration(labelText: "Area"),
                   isExpanded: true,
                   onChanged: (value) => selectedFaculty = value ?? 'All',
                 ),
                 const SizedBox(height: 10),
-                
                 ElevatedButton(
                   onPressed: () async {
                     final picked = await showDateRangePicker(
@@ -126,6 +147,23 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     );
   }
 
+  Future<String?> _fetchProfileImage(String contactNumber) async {
+    try {
+      final userSnapshot = await _firestore
+          .collection('users')
+          .where('phone', isEqualTo: contactNumber)
+          .limit(1)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        return userSnapshot.docs.first['profileImage'];
+      }
+    } catch (error) {
+      print('Error fetching profile image: $error');
+    }
+    return null;
+  }
+
   bool _matchesFilters(Map<String, dynamic> item) {
     if (_selectedFaculty != 'All' && item['faculty'] != _selectedFaculty) {
       return false;
@@ -136,10 +174,10 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
       if (itemTimestamp == null) {
         return false;
       }
-      
+
       // Convert Firestore Timestamp to DateTime
       final itemDate = itemTimestamp.toDate();
-      
+
       // Check if itemDate is within the range
       if (itemDate.isBefore(_startDate!) || itemDate.isAfter(_endDate!)) {
         return false;
@@ -150,7 +188,6 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
   }
 
   String createdAtString = '';
-
 
   @override
   Widget build(BuildContext context) {
@@ -298,15 +335,14 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                   filteredItems.sort((a, b) {
                     final timestampA = a['createdAt']; // Firestore Timestamp
                     final timestampB = b['createdAt']; // Firestore Timestamp
-                    
+
                     if (timestampA == null || timestampB == null) return 0;
-                    
+
                     final dateA = timestampA.toDate(); // Convert Firestore Timestamp to DateTime
                     final dateB = timestampB.toDate(); // Convert Firestore Timestamp to DateTime
-                    
+
                     return dateB.compareTo(dateA); // Sort in descending order
                   });
-
 
                   return ListView.builder(
                     itemCount: filteredItems.length,
@@ -314,149 +350,202 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                       final item = filteredItems[index];
                       final data = item.data() as Map<String, dynamic>;
 
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // User info and time
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: Colors.brown[200],
-                                    child: Text(
-                                      data['name']?.substring(0, 1) ?? '?',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        data['name'] ?? 'Unknown User',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.brown[800],
-                                        ),
-                                      ),
-                                      Text(
-                                        calculatePostAge(data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate().toIso8601String() : ''),  // Use createdAt here
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      // Add Verified status
-                                      if (data['verification'] == "yes") 
-                                        const Text(
-                                          'Verified',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              
-                              // Item image placeholder or actual image
-                              Container(
-                                height: 150,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.grey[300],
-                                ),
-                                child: data['photo_url'] != null && data['photo_url'] != ''
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(
-                                          data['photo_url'],
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (context, child, progress) {
-                                            if (progress == null) return child;
-                                            return const Center(
-                                              child: CircularProgressIndicator(),
-                                            );
-                                          },
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return const Icon(
-                                              Icons.broken_image,
-                                              color: Colors.grey,
-                                              size: 50,
-                                            );
-                                          },
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.image_not_supported,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      ),
-                              ),
-                              const SizedBox(height: 10),
-                              
-                              // Item details
-                              Text(
-                                data['item'] ?? 'Unknown Item',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                data['location'] ?? 'No location provided',
-                                style: const TextStyle(color: Colors.black54),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                data['description'] ?? 'No description provided',
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                              const SizedBox(height: 10),
-
-                              // Contact Button
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ItemDetailsScreen(
-                                          item: data, // Pass the selected item's data
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.brown[400],
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text("See More"),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                      return ItemCard(data: data);
                     },
                   );
                 },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ItemCard extends StatefulWidget {
+  final Map<String, dynamic> data;
+
+  const ItemCard({Key? key, required this.data}) : super(key: key);
+
+  @override
+  _ItemCardState createState() => _ItemCardState();
+}
+
+class _ItemCardState extends State<ItemCard> {
+  String? profileImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    String? imageUrl = await _fetchProfileImage(widget.data['contact']);
+    setState(() {
+      profileImageUrl = imageUrl;
+    });
+  }
+
+  Future<String?> _fetchProfileImage(String contactNumber) async {
+    try {
+      final userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('phone', isEqualTo: contactNumber)
+          .limit(1)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        return userSnapshot.docs.first['profileImage'];
+      }
+    } catch (error) {
+      print('Error fetching profile image: $error');
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = widget.data;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User info and time
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.brown[200],
+                  backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
+                  child: profileImageUrl == null
+                      ? Text(
+                          data['name']?.substring(0, 1) ?? '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data['name'] ?? 'Unknown User',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.brown[800],
+                      ),
+                    ),
+                    Text(
+                      calculatePostAge(data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate().toIso8601String() : ''),  // Use createdAt here
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    // Add Verified status
+                    if (data['verification'] == "yes") 
+                      const Text(
+                        'Verified',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            
+            // Item image placeholder or actual image
+            Container(
+              height: 150,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+              ),
+              child: data['photo_url'] != null && data['photo_url'] != ''
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        data['photo_url'],
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                            size: 50,
+                          );
+                        },
+                      ),
+                    )
+                  : const Icon(
+                      Icons.image_not_supported,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
+            ),
+            const SizedBox(height: 10),
+            
+            // Item details
+            Text(
+              data['item'] ?? 'Unknown Item',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              data['location'] ?? 'No location provided',
+              style: const TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              data['description'] ?? 'No description provided',
+              style: const TextStyle(color: Colors.black87),
+            ),
+            const SizedBox(height: 10),
+
+            // Contact Button
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ItemDetailsScreen(
+                        item: data, // Pass the selected item's data
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.brown[400],
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("See More"),
               ),
             ),
           ],

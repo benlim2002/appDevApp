@@ -12,19 +12,17 @@ class ItemDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> item;
 
   const ItemDetailsScreen({super.key, required this.item});
-  
 
   @override
   // ignore: library_private_types_in_public_api
   _ItemDetailsScreenState createState() => _ItemDetailsScreenState();
 }
 
-
-
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   late Map<String, dynamic> item;
   late String userName;
   late String userPhone;
+  String? profileImageUrl;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
@@ -35,6 +33,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     super.initState();
     item = widget.item; // Initialize the item state
     _checkIfUserIsGuest();
+    _loadProfileImage();
   }
 
   Future<void> _checkIfUserIsGuest() async {
@@ -57,6 +56,30 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     } else {
       return 'Guest';
     }
+  }
+
+  Future<void> _loadProfileImage() async {
+    String? imageUrl = await _fetchProfileImage(item['contact']);
+    setState(() {
+      profileImageUrl = imageUrl;
+    });
+  }
+
+  Future<String?> _fetchProfileImage(String contactNumber) async {
+    try {
+      final userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('phone', isEqualTo: contactNumber)
+          .limit(1)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        return userSnapshot.docs.first['profileImage'];
+      }
+    } catch (error) {
+      print('Error fetching profile image: $error');
+    }
+    return null;
   }
 
   String _formatTimestamp(String timestampString) {
@@ -91,7 +114,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   }
 
   // Function to show confirmation dialog and update the status if confirmed
- void _showConfirmationDialog() {
+  void _showConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -135,7 +158,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   print('Guest Name: $userName');
                   print('Guest Phone: $userPhone');
                 }
- 
 
                 Navigator.of(context).pop();
                 await _updateStatusToTBD();
@@ -159,15 +181,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       // Check if the document exists
       if (!docSnapshot.exists) {
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Item not found in Firestore.")),
         );
         return; // Exit if the document does not exist
       }
 
-
-      String aptMadeBy = "Guest"; 
+      String aptMadeBy = "Guest";
       if (FirebaseAuth.instance.currentUser != null) {
         // User is authenticated, fetch their details
         final user = FirebaseAuth.instance.currentUser!;
@@ -180,13 +200,11 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         }
       }
 
-      
       await itemRef.update({
-        'postType': 'TBD', 
-        'aptMadeBy': aptMadeBy, 
-        'userPhone': aptMadeBy == "Guest" ? null : userPhone, 
+        'postType': 'TBD',
+        'aptMadeBy': aptMadeBy,
+        'userPhone': aptMadeBy == "Guest" ? null : userPhone,
       });
-
 
       showDialog(
         context: context,
@@ -281,15 +299,14 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-
-                           // Show a message if the item is verified
+                            // Show a message if the item is verified
                             if (item['verification'] == 'yes') ...[
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.green[50], 
+                                  color: Colors.green[50],
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: Colors.green), 
+                                  border: Border.all(color: Colors.green),
                                 ),
                                 child: const Row(
                                   children: [
@@ -310,13 +327,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                            ]else
-                             Container(
+                            ] else
+                              Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color.fromARGB(255, 245, 232, 232), 
+                                  color: const Color.fromARGB(255, 245, 232, 232),
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color.fromARGB(255, 196, 80, 80)), 
+                                  border: Border.all(color: const Color.fromARGB(255, 196, 80, 80)),
                                 ),
                                 child: const Row(
                                   children: [
@@ -336,7 +353,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                            const SizedBox(height: 10),
 
                             // Item Title
                             Text(
@@ -379,13 +396,16 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                     CircleAvatar(
                                       radius: 20,
                                       backgroundColor: Colors.brown[200],
-                                      child: Text(
-                                        item['name']?.substring(0, 1) ?? '?',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                      backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
+                                      child: profileImageUrl == null
+                                          ? Text(
+                                              item['name']?.substring(0, 1) ?? '?',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            )
+                                          : null,
                                     ),
                                     const SizedBox(width: 10),
                                     Column(

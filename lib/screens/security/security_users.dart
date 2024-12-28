@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:utmlostnfound/screens/security/security_appbar.dart'; // Import SecurityAppBar
@@ -11,14 +12,15 @@ class SecurityUsersScreen extends StatefulWidget {
 
 class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String _selectedRole = 'Users'; // Default to 'Users'
+  String _selectedRole = 'Students'; // Default to 'Users'
   String _searchQuery = ''; // Default empty search query
   bool _isSearching = false; // Track whether the search bar is visible
-  List<String> roles = ['Users', 'Security Personnel', 'Staff']; // Options to filter by roles
+  List<String> roles = ['Students', 'Security Personnel', 'Staff']; // Options to filter by roles
+  int totalUsersCount = 0; // Variable to hold the total number of users
 
   String getFirestoreRole(String role) {
     switch (role) {
-      case 'Users':
+      case 'Students':
         return 'student'; // Map 'Users' to 'student'
       case 'Security Personnel':
         return 'security'; // Map 'Security Personnel' to 'security'
@@ -30,11 +32,185 @@ class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize totalUsersCount
+    _fetchTotalUserCount();
+  }
+
+  // Fetch the total user count based on selected role
+  Future<void> _fetchTotalUserCount() async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: getFirestoreRole(_selectedRole))
+          .get();
+
+      setState(() {
+        totalUsersCount = snapshot.docs.length;
+      });
+    } catch (e) {
+      print("Error fetching total user count: $e");
+    }
+  }
+
+  void _showUserDetails(BuildContext context, Map<String, dynamic> user, String userId) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (BuildContext context) {
+      return DraggableScrollableSheet(
+        expand: false,
+        builder: (BuildContext context, ScrollController scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    if (user['profileImage'] != null && user['profileImage'].isNotEmpty)
+                      Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16.0), // Adjust the radius as needed
+                        child: Image.network(
+                          user['profileImage'],
+                          height: 400,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      ),
+                    const SizedBox(height: 16),
+                    Text(
+                      user['name'] ?? 'Unknown Name',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Contact: ${user['phone'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'E-mail: ${user['email'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Role: ${user['role'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    if (user['role'] == 'student') ...[
+                      Text(
+                        'Faculty: ${user['faculty'] ?? ''}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else if (user['role'] == 'staff') ...[
+                      Text(
+                        'Faculty: ${user['faculty'] ?? ''}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else if (user['role'] == 'security') ...[
+                      Text(
+                        'Work Area: ${user['workarea'] ?? ''}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    ElevatedButton(
+                      onPressed: () {
+                        _showDeleteConfirmationDialog(context, user['name'], userId);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: Colors.red,
+                      ),
+                      child: const Text('Delete User'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+void _showDeleteConfirmationDialog(BuildContext context, String userName, String userId) {
+  final TextEditingController nameController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Please type the user\'s name to confirm deletion:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'User Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text == userName) {
+                _deleteUser(userId);
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('User name does not match')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _deleteUser(String userId) async {
+  try {
+    await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('User deleted successfully')),
+    );
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error deleting user: $error')),
+    );
+  }
+}
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: SecurityAppBar(
-        title: "Security Users", // Title for the Security Users screen
-        scaffoldKey: GlobalKey<ScaffoldState>(), // Pass the scaffoldKey to the SecurityAppBar
+        title: "View Users", // Title for the View Users screen
+        scaffoldKey: GlobalKey<ScaffoldState>(), // Pass the scaffoldKey to the AdminAppBar
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -67,7 +243,9 @@ class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _selectedRole = newValue!; // Update selected role
+                        totalUsersCount = 0; // Reset total count when role changes
                       });
+                      _fetchTotalUserCount(); // Refetch the user count
                     },
                     items: roles.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
@@ -106,6 +284,17 @@ class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              // Display the total user count
+              Text(
+                'Total Users: $totalUsersCount', // Show the total count
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // StreamBuilder to get the users with role and search filter
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore
@@ -146,7 +335,7 @@ class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
                       itemCount: users.length,
                       itemBuilder: (context, index) {
                         final user = users[index].data() as Map<String, dynamic>;
-                        return _buildUserCard(user);
+                        return _buildUserCard(user, users[index].id);
                       },
                     );
                   },
@@ -159,34 +348,32 @@ class _SecurityUsersScreenState extends State<SecurityUsersScreen> {
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user) {
+  Widget _buildUserCard(Map<String, dynamic> user, String userId) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
+        onLongPress: (){
+          _showUserDetails(context, user, userId);
+        },
         title: Text(user['name'] ?? 'Unknown User'),
         subtitle: Text(user['role'] ?? 'No role assigned'),
-        leading: user['photo_url'] != null && user['photo_url'].isNotEmpty
+        leading: user['profileImage'] != null && user['profileImage'].isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  user['photo_url'],
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.broken_image,
-                      size: 50,
-                      color: Colors.grey,
-                    );
-                  },
+                child: CachedNetworkImage(
+                  imageUrl: user['profileImage'],
+                  width: 50,  // Set the width limit for the image
+                  height: 50, // Set the height limit for the image
+                  fit: BoxFit.cover,  // Ensure image maintains aspect ratio
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),  // Placeholder while image is loading
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.broken_image,
+                    size: 50,
+                    color: Colors.grey,
+                  ),  // Error widget if the image fails to load
                 ),
               )
             : const Icon(Icons.person),

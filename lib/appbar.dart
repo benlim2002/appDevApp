@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:utmlostnfound/screens/home/profile.dart';
 import 'package:utmlostnfound/screens/home/certificates.dart';
 import 'package:utmlostnfound/screens/home/appointments.dart'; 
+import 'package:utmlostnfound/screens/home/my_posts.dart'; 
 import 'package:utmlostnfound/main.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -19,6 +20,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _CustomAppBarState createState() => _CustomAppBarState();
 
   @override
@@ -99,7 +101,17 @@ class _CustomAppBarState extends State<CustomAppBar> {
             MaterialPageRoute(builder: (context) => const ProfileScreen()),
           );
         }
-        break;
+      break;
+      case 'my_posts':
+        if (currentUser == null) {
+          _showSignInDialog(context);  // Show dialog when not signed in
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyPostsScreen()),
+          );
+        }
+      break;
       case 'appointments':
         Navigator.push(
             context,
@@ -167,6 +179,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   ),
                 ),
               ],
+              PopupMenuItem(
+                value: 'my_posts',
+                child: Text(
+                  "My Posts",
+                  style: textTheme.bodyMedium,
+                ),
+              ),
               PopupMenuItem(
                 value: 'appointments',
                 child: Text(

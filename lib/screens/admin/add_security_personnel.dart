@@ -24,6 +24,7 @@ class _AddSecurityPersonnelScreenState
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _contactController = TextEditingController(); 
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _photoUrlController = TextEditingController();
   // ignore: unused_field
@@ -84,6 +85,7 @@ class _AddSecurityPersonnelScreenState
   Future<void> _addSecurityPersonnel() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
+    final contact = _contactController.text.trim();
     final password = _passwordController.text;
     final photoUrl = _photoUrl ?? ''; // Use uploaded photo URL
 
@@ -102,6 +104,7 @@ class _AddSecurityPersonnelScreenState
         await _firestore.collection('users').doc(user.uid).set({
           'name': name,
           'email': email,
+          'contact': contact,
           'profileImage': photoUrl,
           'workArea': _selectedWorkArea,
           'role': 'security', 
@@ -115,6 +118,7 @@ class _AddSecurityPersonnelScreenState
 
         _nameController.clear();
         _emailController.clear();
+        _contactController.clear();
         _passwordController.clear();
         _photoUrlController.clear();
       }
@@ -306,6 +310,7 @@ Widget _buildWorkAreaField() {
                           _buildField("Name", "Enter security personnel's name", _nameController),
                           _buildWorkAreaField(),
                           _buildField("Email", "Enter email", _emailController),
+                          _buildField("Contact", "Enter contact", _contactController),
                           _buildField("Password", "Enter password", _passwordController),
                           
                           const SizedBox(height: 20),

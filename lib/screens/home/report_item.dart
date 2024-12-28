@@ -24,9 +24,45 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   final _contactController = TextEditingController(text: "+60");
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final List<String> faculties = [
+    'Faculty of Computing', 
+    'Faculty of Civil Engineering', 
+    'Faculty of Mechanical Engineering', 
+    'Faculty of Electrical Engineering', 
+    'Faculty of Chemical and Energy Engineering', 
+    'Faculty of Science', 
+    'Faculty of Built Environment and Surveying', 
+    'Faculty of Management',
+    'Faculty of Social Sciences and Humanities'
+  ];
+
+  final List<String> kolejs = [
+    'Kolej Tun Dr. Ismail',
+    'Kolej Tun Fatimah',
+    'Kolej Tun Razak',
+    'Kolej Perdana',
+    'Kolej 9 & 10',
+    'Kolej Datin Seri Endon',
+    'Kolej Dato Onn Jaafar',
+    'Kolej Tun Hussien Onn',
+    'Kolej Tuanku Canselor',
+    'Kolej Rahman Putra'
+  ];
+
+  final List<String> arkeds = [
+    'Arked Meranti',
+    'Arked Cengal',
+    'Arked Angkasa',
+    'Arked Kolej 13',
+    'Arked Kolej 9 & 10',
+    'Arked Bangunan Persatuan Pelajar',
+    'Arked Kolej Perdana'
+  ];
+
   DateTime? _selectedDate;
   String? _selectedFaculty;
   String? _postType = 'Lost'; // Default value for Post Type
+  String? _selectedCategory; // Define _selectedCategory
 
   // ignore: duplicate_ignore
   // ignore: unused_field
@@ -220,57 +256,75 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                       keyboardType: TextInputType.phone,
                     ),
                     _buildField("Location", "Enter location", _locationController),
-                    const Text('Faculty', style: TextStyle(fontSize: 16)),
-                    Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        value: _selectedFaculty,
-                        items: [
-                              'Faculty of Computing', 
-                              'Faculty of Civil Engineering', 
-                              'Faculty of Mechanical Engineering', 
-                              'Faculty of Electrical Engineering', 
-                              'Faculty of Chemical and Energy Engineering', 
-                              'Faculty of Science', 
-                              'Faculty of Built Environment and Surveying ', 
-                              'Faculty of Management',
-                              'Faculty of Social Sciences and Humanities',
-                              'Kolej Tun Fatimah',
-                              'Kolej Tun Razak',
-                              'Kolej Perdana',
-                              'Kolej 9 & 10',
-                              'Kolej Datin Seri Endon',
-                              'Kolej Dato Onn Jaafar',
-                              'Kolej Tun Hussien Onn',
-                              'Kolej Tuanku Canselor',
-                              'Kolej Rahman Putra',
-                              'Arked Meranti',
-                              'Arked Cengal',
-                              'Arked Angkasa',
-                              'Arked Kolej 13',
-                              'Arked Kolej 9 & 10',
-                              'Arked Bangunan Persatuan Pelajar',
-                              'Arked Kolej Perdana'
-                        ].map((faculty) => DropdownMenuItem(
-                          value: faculty,
-                          child: Text(faculty),
-                        )).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedFaculty = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.grey[200],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.5),
+                    const Text('Area', style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity, // Ensure the container takes the full width
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ChoiceChip(
+                            label: const Text('Faculty'),
+                            selected: _selectedCategory == 'Faculty',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = 'Faculty';
+                                _selectedFaculty = faculties.first;
+                              });
+                            },
                           ),
+                          ChoiceChip(
+                            label: const Text('Kolej'),
+                            selected: _selectedCategory == 'Kolej',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = 'Kolej';
+                                _selectedFaculty = kolejs.first;
+                              });
+                            },
+                          ),
+                          ChoiceChip(
+                            label: const Text('Arked'),
+                            selected: _selectedCategory == 'Arked',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = 'Arked';
+                                _selectedFaculty = arkeds.first;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const SizedBox(width: 10),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: _selectedFaculty,
+                      items: (_selectedCategory == 'Faculty'
+                              ? faculties
+                              : _selectedCategory == 'Kolej'
+                                  ? kolejs
+                                  : arkeds)
+                          .map((option) => DropdownMenuItem(
+                                value: option,
+                                child: Text(option),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedFaculty = value!;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.5),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 10),
                     const Text("Date", style: TextStyle(fontSize: 16)),
                     GestureDetector(
                       onTap: () => _selectDate(context),

@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, unused_local_variable
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,7 +9,6 @@ import 'package:month_picker_dialog/month_picker_dialog.dart';
 // ignore: unused_import
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:csv/csv.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
@@ -32,15 +31,32 @@ class _AdminStatisticsState extends State<AdminStatistics> {
   String currentPeriod = ''; // Current selected period (e.g., "Month")
   
   final Map<String, String> facultyMapping = {
-    'Faculty of Computing': 'FC',
-    'Faculty of Civil Engineering': 'FCE',
-    'Faculty of Mechanical Engineering': 'FME',
-    'Faculty of Electrical Engineering': 'FEE',
-    'Faculty of Chemical and Energy Engineering': 'FCEE',
-    'Faculty of Science': 'FS',
-    'Faculty of Built Environment and Surveying': 'FBES',
-    'Faculty of Management': 'FM',
-    'Faculty of Social Sciences and Humanities': 'FSSH',
+  'Faculty of Computing': 'FC',
+  'Faculty of Civil Engineering': 'FCE',
+  'Faculty of Mechanical Engineering': 'FME',
+  'Faculty of Electrical Engineering': 'FEE',
+  'Faculty of Chemical and Energy Engineering': 'FCEE',
+  'Faculty of Science': 'FS',
+  'Faculty of Built Environment and Surveying': 'FBES',
+  'Faculty of Management': 'FM',
+  'Faculty of Social Sciences and Humanities': 'FSSH',
+  'Kolej Tun Dr. Ismail': 'KTDI',
+  'Kolej Tun Fatimah': 'KTF',
+  'Kolej Tun Razak': 'KTR',
+  'Kolej Perdana': 'KP',
+  'Kolej 9 & 10': 'K910',
+  'Kolej Datin Seri Endon': 'KDSE',
+  'Kolej Dato Onn Jaafar': 'KDOJ',
+  'Kolej Tun Hussien Onn': 'KTHO',
+  'Kolej Tuanku Canselor': 'KTC',
+  'Kolej Rahman Putra': 'KRP',
+  'Arked Meranti': 'AM',
+  'Arked Cengal': 'AC',
+  'Arked Angkasa': 'AA',
+  'Arked Kolej 13': 'AK13',
+  'Arked Kolej 9 & 10': 'AK910',
+  'Arked Bangunan Persatuan Pelajar': 'ABPP',
+  'Arked Kolej Perdana': 'AKP',
   };
 
   @override
@@ -54,12 +70,16 @@ class _AdminStatisticsState extends State<AdminStatistics> {
     try {
       Map<String, int> counts = {};
       for (String fullName in facultyMapping.keys) {
-        final snapshot = await _firestore
-            .collection('items')
-            .where('faculty', isEqualTo: fullName)
-            .get();
-        String abbreviation = facultyMapping[fullName]!;
-        counts[abbreviation] = snapshot.docs.length;
+        if ((currentGraph == 'Faculty' && fullName.startsWith('Faculty')) ||
+            (currentGraph == 'Kolej' && fullName.startsWith('Kolej')) ||
+            (currentGraph == 'Arked' && fullName.startsWith('Arked'))) {
+          final snapshot = await _firestore
+              .collection('items')
+              .where('faculty', isEqualTo: fullName)
+              .get();
+          String abbreviation = facultyMapping[fullName]!;
+          counts[abbreviation] = snapshot.docs.length;
+        }
       }
       setState(() {
         facultyLostCounts = counts;
@@ -110,6 +130,10 @@ class _AdminStatisticsState extends State<AdminStatistics> {
   Widget _buildChart() {
     if (currentGraph == 'Faculty') {
       return _buildBarChart(facultyLostCounts);
+    } else if (currentGraph == 'Kolej') {
+      return _buildBarChart(facultyLostCounts);
+    } else if (currentGraph == 'Arked') {
+      return _buildBarChart(facultyLostCounts);
     } else {
       return _buildLineChart(timeLostCounts);
     }
@@ -150,6 +174,38 @@ class _AdminStatisticsState extends State<AdminStatistics> {
             onTap: () {
               setState(() {
                 currentGraph = 'Faculty';
+                isLoading = true;
+                _fetchFacultyLostCounts();
+              });
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text(
+              'Lost Items - Kolej',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                currentGraph = 'Kolej';
+                isLoading = true;
+                _fetchFacultyLostCounts();
+              });
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text(
+              'Lost Items - Arked',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                currentGraph = 'Arked';
                 isLoading = true;
                 _fetchFacultyLostCounts();
               });
@@ -330,6 +386,10 @@ class _AdminStatisticsState extends State<AdminStatistics> {
   Widget _buildCurrentPeriodBar() {
     if (currentGraph == 'Faculty') {
       return const SizedBox.shrink();
+    } else if (currentGraph == 'Kolej') {
+      return const SizedBox.shrink();
+    } else if (currentGraph == 'Arked') {
+      return const SizedBox.shrink();
     }
 
     return GestureDetector(
@@ -353,53 +413,17 @@ class _AdminStatisticsState extends State<AdminStatistics> {
     );
   }
 
-  // Export data to CSV
-  Future<void> _exportToCSV() async {
-    try {
-      // Fetch all items data from Firestore
-      QuerySnapshot snapshot = await _firestore.collection('items').get();
-
-      // Prepare CSV data
-      List<List<String>> csvData = [
-        // Headers
-        ['Date', 'Count'],
-        // Data
-        ...snapshot.docs.map((doc) {
-          Timestamp createdAtTimestamp = doc['createdAt'];
-          DateTime createdAtDate = createdAtTimestamp.toDate();
-          String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
-          return [dateKey, '1']; // Assuming each document represents one lost item
-        // ignore: unnecessary_to_list_in_spreads
-        }).toList(),
-      ];
-
-      String csv = const ListToCsvConverter().convert(csvData);
-
-      final directory = await getApplicationDocumentsDirectory();
-      final path = '${directory.path}/lost_items.csv';
-      final file = File(path);
-      await file.writeAsString(csv);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CSV exported to $path')),
-      );
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to export CSV')),
-      );
-    }
-  }
 
   // Export data to PDF
   Future<void> _exportToPDF(DateTime selectedDate) async {
-    try {
-      // Fetch all items data from Firestore
-      QuerySnapshot snapshot = await _firestore.collection('items').get();
+  try {
+    // Fetch all items data from Firestore
+    QuerySnapshot snapshot = await _firestore.collection('items').get();
 
-      // Prepare PDF data
-      final pdf = pw.Document();
+    // Prepare PDF data
+    final pdf = pw.Document();
 
-      pdf.addPage(
+    pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
           // Extract and sort the data by date
@@ -418,43 +442,47 @@ class _AdminStatisticsState extends State<AdminStatistics> {
           final numberedData = data.asMap().entries.map((entry) {
             int index = entry.key + 1; // Start numbering from 1
             List<String> row = entry.value;
-          return [index.toString(), ...row];
+            return [index.toString(), ...row];
           }).toList();
 
           // Conditionally generate PDF content based on graph type
-          if (currentGraph == 'Faculty') {
-            // Group items by faculty
-            final facultyGroups = <String, List<String>>{};
+          if (currentGraph == 'Faculty' || currentGraph == 'Kolej' || currentGraph == 'Arked') {
+            // Group items by the selected category
+            final categoryGroups = <String, List<String>>{};
             for (var doc in snapshot.docs) {
-              String faculty = doc['faculty'] ?? 'Unknown Faculty';
+              String category = doc['faculty'] ?? 'Unknown Category';
               String item = doc['item'] ?? 'Unknown Item';
-              if (!facultyGroups.containsKey(faculty)) {
-                facultyGroups[faculty] = [];
+              if ((currentGraph == 'Faculty' && category.startsWith('Faculty')) ||
+                  (currentGraph == 'Kolej' && category.startsWith('Kolej')) ||
+                  (currentGraph == 'Arked' && category.startsWith('Arked'))) {
+                if (!categoryGroups.containsKey(category)) {
+                  categoryGroups[category] = [];
+                }
+                categoryGroups[category]!.add(item);
               }
-              facultyGroups[faculty]!.add(item);
             }
 
             // Prepare data for the table
-            final facultyData = facultyGroups.entries.map((entry) {
-              String faculty = entry.key;
+            final categoryData = categoryGroups.entries.map((entry) {
+              String category = entry.key;
               int count = entry.value.length;
-              return [faculty, count.toString(), entry.value.join(', ')];
+              return [category, count.toString(), entry.value.join(', ')];
             }).toList();
 
             // Add item number to the data
-            final numberedFacultyData = facultyData.asMap().entries.map((entry) {
-            int index = entry.key + 1; // Start numbering from 1
-            List<String> row = entry.value;
-            return [index.toString(), ...row];
+            final numberedCategoryData = categoryData.asMap().entries.map((entry) {
+              int index = entry.key + 1; // Start numbering from 1
+              List<String> row = entry.value;
+              return [index.toString(), ...row];
             }).toList();
 
             return pw.Column(
               children: [
-                pw.Text('Total Items by Faculty', style: const pw.TextStyle(fontSize: 24)),
+                pw.Text('Total Items by $currentGraph', style: const pw.TextStyle(fontSize: 24)),
                 pw.SizedBox(height: 16),
-                pw.Table.fromTextArray(
-                  headers: ['No', 'Faculty', 'Count', 'Items'],
-                  data: numberedFacultyData.map((row) {
+                pw.TableHelper.fromTextArray(
+                  headers: ['No', currentGraph, 'Count', 'Items'],
+                  data: numberedCategoryData.map((row) {
                     // Join items with newline character
                     row[3] = row[3].split(', ').join('\n');
                     return row;
@@ -462,69 +490,69 @@ class _AdminStatisticsState extends State<AdminStatistics> {
                 ),
               ],
             );
-            } else if (currentGraph == 'Month') {
-              // Filter items by the specified month
-              DateTime startOfMonth = DateTime(selectedDate.year, selectedDate.month, 1);
-              DateTime endOfMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0);
+          } else if (currentGraph == 'Month') {
+            // Filter items by the specified month
+            DateTime startOfMonth = DateTime(selectedDate.year, selectedDate.month, 1);
+            DateTime endOfMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0);
 
-              final monthData = snapshot.docs.where((doc) {
-                Timestamp createdAtTimestamp = doc['createdAt'];
-                DateTime createdAtDate = createdAtTimestamp.toDate();
-                return createdAtDate.isAfter(startOfMonth) && createdAtDate.isBefore(endOfMonth);
-              }).map((doc) {
-                Timestamp createdAtTimestamp = doc['createdAt'];
-                DateTime createdAtDate = createdAtTimestamp.toDate();
-                String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
-                String item = doc['item'] ?? 'Unknown Item';
-                return [dateKey, item];
-              }).toList();
+            final monthData = snapshot.docs.where((doc) {
+              Timestamp createdAtTimestamp = doc['createdAt'];
+              DateTime createdAtDate = createdAtTimestamp.toDate();
+              return createdAtDate.isAfter(startOfMonth) && createdAtDate.isBefore(endOfMonth);
+            }).map((doc) {
+              Timestamp createdAtTimestamp = doc['createdAt'];
+              DateTime createdAtDate = createdAtTimestamp.toDate();
+              String dateKey = DateFormat('yyyy-MM-dd').format(createdAtDate);
+              String item = doc['item'] ?? 'Unknown Item';
+              return [dateKey, item];
+            }).toList();
 
-              // Sort the data by date
-              monthData.sort((a, b) => a[0].compareTo(b[0]));
+            // Sort the data by date
+            monthData.sort((a, b) => a[0].compareTo(b[0]));
 
-              // Add item number to the data
-              final numberedMonthData = monthData.asMap().entries.map((entry) {
-                int index = entry.key + 1; // Start numbering from 1
-                List<String> row = entry.value;
-                return [index.toString(), ...row];
-              }).toList();
+            // Add item number to the data
+            final numberedMonthData = monthData.asMap().entries.map((entry) {
+              int index = entry.key + 1; // Start numbering from 1
+              List<String> row = entry.value;
+              return [index.toString(), ...row];
+            }).toList();
 
-              return pw.Column(
-                children: [
-                  pw.Text('Total Items - $currentPeriod', style: const pw.TextStyle(fontSize: 24)),
-                  pw.SizedBox(height: 16),
-                  pw.Table.fromTextArray(
-                    headers: ['No', 'Date', 'Item'],
-                    data: numberedMonthData,
-                  ),
-                ],
-              );
-            } else {
-              return pw.Center(
-                child: pw.Text('Unknown graph type'),
-              );
-            }
-          },
-        ),
-      );
+            return pw.Column(
+              children: [
+                pw.Text('Total Items - $currentPeriod', style: const pw.TextStyle(fontSize: 24)),
+                pw.SizedBox(height: 16),
+                pw.TableHelper.fromTextArray(
+                  headers: ['No', 'Date', 'Item'],
+                  data: numberedMonthData,
+                ),
+              ],
+            );
+          } else {
+            return pw.Center(
+              child: pw.Text('Unknown graph type'),
+            );
+          }
+        },
+      ),
+    );
 
-      final directory = await getApplicationDocumentsDirectory();
-      final path = '${directory.path}/lost_items.pdf';
-      final file = File(path);
-      await file.writeAsBytes(await pdf.save());
+    final directory = await getApplicationDocumentsDirectory();
+    final path = '${directory.path}/lost_items.pdf';
+    final file = File(path);
+    await file.writeAsBytes(await pdf.save());
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PDF exported to $path')),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('PDF exported to $path')),
+    );
 
-      // Open the PDF file
-      await OpenFile.open(path);
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to export PDF')),
-      );
-    }
+    // Open the PDF file
+    await OpenFile.open(path);
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to export PDF')),
+    );
   }
+}
 
   Widget _buildSummary() {
     TextStyle summaryTextStyle = const TextStyle(
@@ -537,6 +565,20 @@ class _AdminStatisticsState extends State<AdminStatistics> {
       int mostItemsLost = facultyLostCounts[facultyWithMostItemsLost] ?? 0;
       return Text(
         'Faculty with Most Items Lost: $facultyWithMostItemsLost ($mostItemsLost items)',
+        style: summaryTextStyle,
+      );
+    } else if (currentGraph == 'Kolej') {
+      String facultyWithMostItemsLost = facultyLostCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+      int mostItemsLost = facultyLostCounts[facultyWithMostItemsLost] ?? 0;
+      return Text(
+        'Kolej with Most Items Lost: $facultyWithMostItemsLost ($mostItemsLost items)',
+        style: summaryTextStyle,
+      );
+    } else if (currentGraph == 'Arked') {
+      String facultyWithMostItemsLost = facultyLostCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+      int mostItemsLost = facultyLostCounts[facultyWithMostItemsLost] ?? 0;
+      return Text(
+        'Arked with Most Items Lost: $facultyWithMostItemsLost ($mostItemsLost items)',
         style: summaryTextStyle,
       );
     } else {
@@ -589,9 +631,13 @@ class _AdminStatisticsState extends State<AdminStatistics> {
                         GestureDetector(
                           onTap: _showGraphOptions,
                           child: Text(
-                            currentGraph == 'Faculty'
-                                ? 'Lost Items - Faculty ↓'
-                                : 'Lost Items - Month ↓',
+                          currentGraph == 'Faculty'
+                              ? 'Lost Items - Faculty ↓'
+                              : currentGraph == 'Kolej'
+                                  ? 'Lost Items - Kolej ↓'
+                                  : currentGraph == 'Arked'
+                                      ? 'Lost Items - Arked ↓'
+                                      : 'Lost Items - Month ↓',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,

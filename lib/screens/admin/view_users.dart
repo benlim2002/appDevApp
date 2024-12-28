@@ -54,6 +54,157 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
     }
   }
 
+  void _showUserDetails(BuildContext context, Map<String, dynamic> user, String userId) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (BuildContext context) {
+      return DraggableScrollableSheet(
+        expand: false,
+        builder: (BuildContext context, ScrollController scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    if (user['profileImage'] != null && user['profileImage'].isNotEmpty)
+                      Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16.0), // Adjust the radius as needed
+                        child: Image.network(
+                          user['profileImage'],
+                          height: 400,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      ),
+                    const SizedBox(height: 16),
+                    Text(
+                      user['name'] ?? 'Unknown Name',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Contact: ${user['phone'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'E-mail: ${user['email'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Role: ${user['role'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    if (user['role'] == 'student') ...[
+                      Text(
+                        'Faculty: ${user['faculty'] ?? ''}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else if (user['role'] == 'staff') ...[
+                      Text(
+                        'Faculty: ${user['faculty'] ?? ''}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else if (user['role'] == 'security') ...[
+                      Text(
+                        'Work Area: ${user['workarea'] ?? ''}',
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    ElevatedButton(
+                      onPressed: () {
+                        _showDeleteConfirmationDialog(context, user['name'], userId);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: Colors.red,
+                      ),
+                      child: const Text('Delete User'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+void _showDeleteConfirmationDialog(BuildContext context, String userName, String userId) {
+  final TextEditingController nameController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Please type the user\'s name to confirm deletion:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'User Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text == userName) {
+                _deleteUser(userId);
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('User name does not match')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _deleteUser(String userId) async {
+  try {
+    await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('User deleted successfully')),
+    );
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error deleting user: $error')),
+    );
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,7 +335,7 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
                       itemCount: users.length,
                       itemBuilder: (context, index) {
                         final user = users[index].data() as Map<String, dynamic>;
-                        return _buildUserCard(user);
+                        return _buildUserCard(user, users[index].id);
                       },
                     );
                   },
@@ -197,11 +348,14 @@ class _ViewUsersScreenState extends State<ViewUsersScreen> {
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user) {
+  Widget _buildUserCard(Map<String, dynamic> user, String userId) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
+        onLongPress: (){
+          _showUserDetails(context, user, userId);
+        },
         title: Text(user['name'] ?? 'Unknown User'),
         subtitle: Text(user['role'] ?? 'No role assigned'),
         leading: user['profileImage'] != null && user['profileImage'].isNotEmpty

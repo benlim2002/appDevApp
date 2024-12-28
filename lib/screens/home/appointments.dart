@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:utmlostnfound/appbar.dart';
+import 'package:intl/intl.dart';
+import 'package:add_2_calendar/add_2_calendar.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -123,48 +125,70 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'Appointment Date: ${data['aptDate'] ?? 'TBD'}',
-                              style: const TextStyle(color: Colors.black87),
+                              'Appointment Date: ${_formatTimestamp(data['aptDate'])}',
+                            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
                             ),
-                            if (data['aptDate'] == 'TBD') ...[
-                              const SizedBox(height: 10),
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 16,
+                                  if (data['aptDate'] != null && data['aptDate'] is Timestamp) ...[
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: _isAppointmentDateReached(data['aptDate']) ? Colors.green : Colors.red,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _isAppointmentDateReached(data['aptDate']) ? 'Ready to Collect' : 'Not Ready',
+                                        style: TextStyle(
+                                          color: _isAppointmentDateReached(data['aptDate']) ? Colors.green : Colors.red,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 89),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: TextButton(
+                                          onPressed: () {
+                                            _addToCalendar(data['aptDate']);
+                                          },
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.blue, padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0), // Padding
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10), // Rounded corners
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Add to Calendar',
+                                            style: TextStyle(
+                                              fontSize: 12, // Font size
+                                              fontWeight: FontWeight.bold, // Font weight
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Ready to Collect',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                ] else ...[
+                                  const SizedBox(height: 10),
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error,
+                                        color: Colors.red,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Not Ready',
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ),
-                            ] else ...[
-                              const SizedBox(height: 10),
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.error,
-                                    color: Colors.red,
-                                    size: 16,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Not Ready',
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+
                           ],
                         ),
                       ),
@@ -176,4 +200,32 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       )  
     );
   }
+}
+
+bool _isAppointmentDateReached(Timestamp timestamp) {
+  DateTime appointmentDate = timestamp.toDate();
+  DateTime now = DateTime.now();
+  return now.isAfter(appointmentDate) || now.isAtSameMomentAs(appointmentDate);
+}
+
+String _formatTimestamp(Timestamp? timestamp) {
+  if (timestamp == null) {
+    return 'TBD';
+  }
+  DateTime dateTime = timestamp.toDate();
+  return DateFormat('MMMM d, yyyy, h:mm a').format(dateTime);
+  
+}
+
+void _addToCalendar(Timestamp timestamp) {
+  DateTime dateTime = timestamp.toDate();
+  final Event event = Event(
+    title: 'Appointment',
+    description: 'Appointment to collect item',
+    location: 'UTM',
+    startDate: dateTime,
+    endDate: dateTime.add(const Duration(minutes: 30)),
+  );
+
+  Add2Calendar.addEvent2Cal(event);
 }
